@@ -5,8 +5,8 @@ aws_region   = "eu-west-1"
 project_name = "demo-media01"
 environment  = "demo"
 
-# AWS Account ID
-aws_account_id = "123456789012"
+# AWS Account ID - Replace with your actual AWS Account ID
+aws_account_id = "<your-12-digit-aws-account-id>"
 
 # VPC Configuration (simplified - only public subnet)
 vpc_cidr            = "10.0.0.0/16"

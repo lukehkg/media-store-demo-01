@@ -1,6 +1,6 @@
 # AWS Configuration
 aws_region = "eu-west-1"
-aws_account_id = "123456789012"  # Replace with your AWS Account ID
+aws_account_id = "<your-12-digit-aws-account-id>"  # Replace with your AWS Account ID
 project_name = "demo-media01"  # Prefix for all resources (for easy management and tag searching)
 environment = "dev"
 
@@ -48,7 +48,7 @@ target_memory_utilization = 80
 
 # SSL/TLS Configuration (optional)
 # domain_name = "example.com"
-# certificate_arn = "arn:aws:acm:eu-west-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+# certificate_arn = "arn:aws:acm:eu-west-1:<your-account-id>:certificate/<certificate-id>"
 
 # Security
 allowed_cidr_blocks = ["0.0.0.0/0"]

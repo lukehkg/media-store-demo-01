@@ -107,7 +107,7 @@ terraform/
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your values:
-   # - aws_account_id (REQUIRED)
+   # - aws_account_id = "<your-12-digit-aws-account-id>" (REQUIRED)
    # - aws_region (default: eu-west-1)
    # - project_name (default: demo-media01)
    # - environment (default: prod)
@@ -190,7 +190,7 @@ terraform/
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your values:
-   # - aws_account_id (REQUIRED)
+   # - aws_account_id = "<your-12-digit-aws-account-id>" (REQUIRED)
    # - ec2_key_name (REQUIRED - your EC2 key pair name)
    # - aws_region (default: eu-west-1)
    ```
@@ -377,9 +377,9 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
 
 | Secret Name | Description | Example |
 |------------|-------------|---------|
-| `AWS_ACCESS_KEY_ID` | AWS IAM user access key | `AKIAIOSFODNN7EXAMPLE` |
-| `AWS_SECRET_ACCESS_KEY` | AWS IAM user secret key | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
-| `AWS_ACCOUNT_ID` | Your AWS Account ID (12 digits) | `123456789012` |
+| `AWS_ACCESS_KEY_ID` | AWS IAM user access key | `<your-access-key-id>` |
+| `AWS_SECRET_ACCESS_KEY` | AWS IAM user secret key | `<your-secret-access-key>` |
+| `AWS_ACCOUNT_ID` | Your AWS Account ID (12 digits) | `<your-12-digit-account-id>` |
 
 #### Optional Variables (Visible in logs)
 
@@ -689,7 +689,7 @@ terraform state show <resource>
 # Login to ECR
 aws ecr get-login-password --region eu-west-1 | \
   docker login --username AWS --password-stdin \
-  <account-id>.dkr.ecr.eu-west-1.amazonaws.com
+  <your-account-id>.dkr.ecr.eu-west-1.amazonaws.com
 
 # List repositories
 aws ecr describe-repositories --region eu-west-1
