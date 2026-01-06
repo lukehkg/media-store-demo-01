@@ -114,10 +114,9 @@ terraform apply
 
 ## 📚 Documentation
 
+- **Complete Documentation:** See `DOCUMENTATION.md` (comprehensive guide)
 - **Production:** See `production/README.md`
 - **Demo:** See `demo/README.md`
-- **Structure:** See `STRUCTURE.md`
-- **Deployment Guide:** See `DEPLOYMENT_GUIDE.md`
 
 ## ⚠️ Important Notes
 
