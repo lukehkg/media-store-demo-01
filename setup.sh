@@ -46,7 +46,7 @@ if [ ! -f ".env" ]; then
 DATABASE_URL=postgresql://user:password@postgres:5432/photoportal
 SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
 B2_APPLICATION_KEY_ID=
-B2_APPLICATION_KEY=your-b2-key
+B2_APPLICATION_KEY=
 B2_BUCKET_NAME=photo-portal
 B2_ENDPOINT=https://s3.us-west-000.backblazeb2.com
 CLOUDFLARE_API_TOKEN=your-token
