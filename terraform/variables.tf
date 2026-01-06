@@ -190,3 +190,27 @@ variable "allowed_cidr_blocks" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "scheduler_enabled" {
+  description = "Enable ECS service scheduler to start/stop services"
+  type        = bool
+  default     = true
+}
+
+variable "start_time_utc" {
+  description = "Start time in UTC (cron format hour). Default 7 AM UTC = 8 AM GMT+1"
+  type        = string
+  default     = "7"
+}
+
+variable "stop_time_utc" {
+  description = "Stop time in UTC (cron format hour). Default 5 PM UTC = 6 PM GMT+1"
+  type        = string
+  default     = "17"
+}
+
+variable "scheduler_weekdays_only" {
+  description = "Schedule only on weekdays (Monday-Friday)"
+  type        = bool
+  default     = true
+}
+

@@ -113,3 +113,47 @@ output "ecr_login_command" {
   value       = "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
 }
 
+output "github_secrets_guide" {
+  description = "GitHub Secrets to configure for CI/CD"
+  value = <<-EOT
+    Required GitHub Secrets:
+    - AWS_ACCESS_KEY_ID: AWS IAM user access key
+    - AWS_SECRET_ACCESS_KEY: AWS IAM user secret key
+    - AWS_ACCOUNT_ID: ${var.aws_account_id}
+    
+    Optional GitHub Variables (can be set as repository variables):
+    - AWS_REGION: ${var.aws_region}
+    - ECS_CLUSTER: ${aws_ecs_cluster.main.name}
+    - ECS_SERVICE_BACKEND: ${aws_ecs_service.backend.name}
+    - ECS_SERVICE_FRONTEND_ADMIN: ${aws_ecs_service.frontend_admin.name}
+    - ECS_SERVICE_FRONTEND_CLIENT: ${aws_ecs_service.frontend_client.name}
+    - ECR_REPOSITORY_BACKEND: ${aws_ecr_repository.backend.name}
+    - ECR_REPOSITORY_FRONTEND_ADMIN: ${aws_ecr_repository.frontend_admin.name}
+    - ECR_REPOSITORY_FRONTEND_CLIENT: ${aws_ecr_repository.frontend_client.name}
+  EOT
+}
+
+output "lambda_scheduler_function_name" {
+  description = "Name of the Lambda scheduler function"
+  value       = var.scheduler_enabled ? aws_lambda_function.ecs_scheduler[0].function_name : null
+}
+
+output "lambda_scheduler_function_arn" {
+  description = "ARN of the Lambda scheduler function"
+  value       = var.scheduler_enabled ? aws_lambda_function.ecs_scheduler[0].arn : null
+}
+
+output "scheduler_schedule" {
+  description = "Scheduler schedule information"
+  value = var.scheduler_enabled ? {
+    enabled        = true
+    start_time_utc = var.start_time_utc
+    stop_time_utc  = var.stop_time_utc
+    weekdays_only  = var.scheduler_weekdays_only
+    start_rule_arn = aws_cloudwatch_event_rule.start_ecs_services[0].arn
+    stop_rule_arn  = aws_cloudwatch_event_rule.stop_ecs_services[0].arn
+  } : {
+    enabled = false
+  }
+}
+

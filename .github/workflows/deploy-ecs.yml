@@ -8,12 +8,16 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: eu-west-1
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
-  ECS_CLUSTER: demo-media01-cluster
-  ECS_SERVICE_BACKEND: demo-media01-backend-dev
-  ECS_SERVICE_FRONTEND_ADMIN: demo-media01-frontend-admin-dev
-  ECS_SERVICE_FRONTEND_CLIENT: demo-media01-frontend-client-dev
+  AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION || 'eu-west-1' }}.amazonaws.com
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER || 'demo-media01-cluster' }}
+  ECS_SERVICE_BACKEND: ${{ vars.ECS_SERVICE_BACKEND || 'demo-media01-backend-dev' }}
+  ECS_SERVICE_FRONTEND_ADMIN: ${{ vars.ECS_SERVICE_FRONTEND_ADMIN || 'demo-media01-frontend-admin-dev' }}
+  ECS_SERVICE_FRONTEND_CLIENT: ${{ vars.ECS_SERVICE_FRONTEND_CLIENT || 'demo-media01-frontend-client-dev' }}
+  ECR_REPOSITORY_BACKEND: ${{ vars.ECR_REPOSITORY_BACKEND || 'demo-media01-backend' }}
+  ECR_REPOSITORY_FRONTEND_ADMIN: ${{ vars.ECR_REPOSITORY_FRONTEND_ADMIN || 'demo-media01-frontend-admin' }}
+  ECR_REPOSITORY_FRONTEND_CLIENT: ${{ vars.ECR_REPOSITORY_FRONTEND_CLIENT || 'demo-media01-frontend-client' }}
 
 jobs:
   build-and-push-backend:
@@ -40,25 +44,73 @@ jobs:
 
       - name: Build, tag, and push backend image to Amazon ECR
         env:
-          ECR_REPOSITORY: demo-media01-backend
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY_BACKEND }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Building Docker image..."
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "Pushing image to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Deploy backend to Amazon ECS
+      - name: Update ECS task definition with new image
+        id: task-def
         env:
-          ECR_REPOSITORY: demo-media01-backend
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY_BACKEND }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Getting current task definition..."
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_SERVICE_BACKEND }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskDefinition' \
+            --output json)
+          
+          echo "Updating image URI in task definition..."
+          NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "New image: $NEW_IMAGE"
+          
+          # Update container image
+          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions[0].image = $IMAGE')
+          
+          # Remove fields that can't be updated
+          UPDATED_TASK_DEF=$(echo "$UPDATED_TASK_DEF" | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          
+          echo "$UPDATED_TASK_DEF" > task-definition.json
+          echo "task-def-json=task-definition.json" >> $GITHUB_OUTPUT
+
+      - name: Register new task definition
+        id: register-task
+        run: |
+          echo "Registering new task definition..."
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://task-definition.json \
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "New task definition ARN: $TASK_DEF_ARN"
+          echo "task-def-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+      - name: Deploy backend to Amazon ECS
+        run: |
+          echo "Deploying to ECS service: ${{ env.ECS_SERVICE_BACKEND }}"
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service ${{ env.ECS_SERVICE_BACKEND }} \
-            --force-new-deployment \
+            --task-definition ${{ steps.register-task.outputs.task-def-arn }} \
+            --region ${{ env.AWS_REGION }} \
+            --force-new-deployment
+          
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE_BACKEND }} \
             --region ${{ env.AWS_REGION }}
+          
+          echo "✅ Backend deployment completed successfully!"
 
   build-and-push-frontend-admin:
     name: Build and Push Frontend Admin
@@ -84,24 +136,72 @@ jobs:
 
       - name: Build, tag, and push frontend admin image to Amazon ECR
         env:
-          ECR_REPOSITORY: demo-media01-frontend-admin
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY_FRONTEND_ADMIN }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Building Docker image..."
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "Pushing image to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Deploy frontend admin to Amazon ECS
+      - name: Update ECS task definition with new image
+        id: task-def
         env:
-          ECR_REPOSITORY: demo-media01-frontend-admin
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY_FRONTEND_ADMIN }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Getting current task definition..."
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_SERVICE_FRONTEND_ADMIN }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskDefinition' \
+            --output json)
+          
+          echo "Updating image URI in task definition..."
+          NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "New image: $NEW_IMAGE"
+          
+          # Update container image
+          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions[0].image = $IMAGE')
+          
+          # Remove fields that can't be updated
+          UPDATED_TASK_DEF=$(echo "$UPDATED_TASK_DEF" | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          
+          echo "$UPDATED_TASK_DEF" > task-definition.json
+          echo "task-def-json=task-definition.json" >> $GITHUB_OUTPUT
+
+      - name: Register new task definition
+        id: register-task
+        run: |
+          echo "Registering new task definition..."
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://task-definition.json \
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "New task definition ARN: $TASK_DEF_ARN"
+          echo "task-def-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+      - name: Deploy frontend admin to Amazon ECS
+        run: |
+          echo "Deploying to ECS service: ${{ env.ECS_SERVICE_FRONTEND_ADMIN }}"
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service ${{ env.ECS_SERVICE_FRONTEND_ADMIN }} \
-            --force-new-deployment \
+            --task-definition ${{ steps.register-task.outputs.task-def-arn }} \
+            --region ${{ env.AWS_REGION }} \
+            --force-new-deployment
+          
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE_FRONTEND_ADMIN }} \
             --region ${{ env.AWS_REGION }}
+          
+          echo "✅ Frontend Admin deployment completed successfully!"
 
   build-and-push-frontend-client:
     name: Build and Push Frontend Client
@@ -127,22 +227,69 @@ jobs:
 
       - name: Build, tag, and push frontend client image to Amazon ECR
         env:
-          ECR_REPOSITORY: demo-media01-frontend-client
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY_FRONTEND_CLIENT }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Building Docker image..."
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "Pushing image to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Deploy frontend client to Amazon ECS
+      - name: Update ECS task definition with new image
+        id: task-def
         env:
-          ECR_REPOSITORY: demo-media01-frontend-client
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY_FRONTEND_CLIENT }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Getting current task definition..."
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_SERVICE_FRONTEND_CLIENT }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskDefinition' \
+            --output json)
+          
+          echo "Updating image URI in task definition..."
+          NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "New image: $NEW_IMAGE"
+          
+          # Update container image
+          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions[0].image = $IMAGE')
+          
+          # Remove fields that can't be updated
+          UPDATED_TASK_DEF=$(echo "$UPDATED_TASK_DEF" | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          
+          echo "$UPDATED_TASK_DEF" > task-definition.json
+          echo "task-def-json=task-definition.json" >> $GITHUB_OUTPUT
+
+      - name: Register new task definition
+        id: register-task
+        run: |
+          echo "Registering new task definition..."
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://task-definition.json \
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "New task definition ARN: $TASK_DEF_ARN"
+          echo "task-def-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+      - name: Deploy frontend client to Amazon ECS
+        run: |
+          echo "Deploying to ECS service: ${{ env.ECS_SERVICE_FRONTEND_CLIENT }}"
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service ${{ env.ECS_SERVICE_FRONTEND_CLIENT }} \
-            --force-new-deployment \
+            --task-definition ${{ steps.register-task.outputs.task-def-arn }} \
+            --region ${{ env.AWS_REGION }} \
+            --force-new-deployment
+          
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE_FRONTEND_CLIENT }} \
             --region ${{ env.AWS_REGION }}
-
+          
+          echo "✅ Frontend Client deployment completed successfully!"

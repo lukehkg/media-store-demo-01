@@ -56,3 +56,6 @@ logs/
 *.bak
 *.tmp
 
+# Terraform Lambda
+terraform/lambda/*.zip
+
