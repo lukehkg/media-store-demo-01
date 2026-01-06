@@ -46,10 +46,13 @@ PRICING = {
 # Default configuration (from terraform.tfvars.example)
 DEFAULT_CONFIG = {
     'region': 'eu-west-1',
+    'use_ec2_alternative': False,  # Set to True to use EC2 instead of Fargate
     'scheduler_enabled': True,
     'start_time_utc': 7,  # 8 AM GMT+1
     'stop_time_utc': 17,  # 6 PM GMT+1
     'weekdays_only': True,
+    'ec2_instance_type': 't3.small',
+    'ec2_volume_size_gb': 30,
     'services': {
         'backend': {
             'cpu': 512,  # 0.5 vCPU
@@ -251,6 +254,50 @@ def calculate_data_transfer_cost(config):
     }
 
 
+def calculate_ec2_cost(config):
+    """Calculate EC2 instance costs"""
+    if not config.get('use_ec2_alternative', False):
+        return {'total': 0, 'breakdown': {}}
+    
+    scheduler_enabled = config.get('scheduler_enabled', True)
+    start_hour = config.get('start_time_utc', 7)
+    stop_hour = config.get('stop_time_utc', 17)
+    weekdays_only = config.get('weekdays_only', True)
+    instance_type = config.get('ec2_instance_type', 't3.small')
+    volume_size = config.get('ec2_volume_size_gb', 30)
+    
+    # EC2 pricing (eu-west-1) - per hour
+    ec2_pricing = {
+        't3.small': 0.0208,
+        't3.medium': 0.0416,
+        't3.large': 0.0832,
+        't3.xlarge': 0.1664
+    }
+    
+    hourly_rate = ec2_pricing.get(instance_type, 0.0208)
+    
+    hours_per_month = calculate_hours_per_month(
+        scheduler_enabled, start_hour, stop_hour, weekdays_only
+    )
+    
+    # EC2 instance cost
+    instance_cost = hourly_rate * hours_per_month
+    
+    # EBS storage cost (gp3) - $0.10 per GB/month
+    ebs_cost = volume_size * 0.10
+    
+    return {
+        'total': round(instance_cost + ebs_cost, 2),
+        'breakdown': {
+            'instance': round(instance_cost, 2),
+            'ebs_storage': round(ebs_cost, 2),
+            'hours_per_month': round(hours_per_month, 2),
+            'instance_type': instance_type
+        },
+        'hours_per_month': round(hours_per_month, 2)
+    }
+
+
 def calculate_lambda_cost(config):
     """Calculate Lambda function costs (scheduler)"""
     if not config.get('scheduler_enabled', True):
@@ -289,15 +336,34 @@ def calculate_lambda_cost(config):
 
 def calculate_total_cost(config):
     """Calculate total monthly cost"""
-    costs = {
-        'ecs_fargate': calculate_ecs_fargate_cost(config),
-        'nat_gateway': calculate_nat_gateway_cost(config),
-        'alb': calculate_alb_cost(config),
-        'ecr': calculate_ecr_cost(config),
-        'cloudwatch_logs': calculate_cloudwatch_cost(config),
-        'data_transfer': calculate_data_transfer_cost(config),
-        'lambda': calculate_lambda_cost(config)
-    }
+    use_ec2 = config.get('use_ec2_alternative', False)
+    
+    if use_ec2:
+        # EC2 alternative (no NAT Gateway, no ALB)
+        costs = {
+            'ec2': calculate_ec2_cost(config),
+            'nat_gateway': {'total': 0, 'breakdown': {}},  # Not needed
+            'alb': {'total': 0, 'breakdown': {}},  # Not needed
+            'ecr': calculate_ecr_cost(config),
+            'cloudwatch_logs': calculate_cloudwatch_cost(config),
+            'data_transfer': calculate_data_transfer_cost(config),
+            'lambda': calculate_lambda_cost(config),
+            'ecs_fargate': {'total': 0, 'breakdown': {}}  # Not used
+        }
+        running_hours = costs['ec2'].get('hours_per_month', 730)
+    else:
+        # ECS Fargate setup
+        costs = {
+            'ecs_fargate': calculate_ecs_fargate_cost(config),
+            'nat_gateway': calculate_nat_gateway_cost(config),
+            'alb': calculate_alb_cost(config),
+            'ecr': calculate_ecr_cost(config),
+            'cloudwatch_logs': calculate_cloudwatch_cost(config),
+            'data_transfer': calculate_data_transfer_cost(config),
+            'lambda': calculate_lambda_cost(config),
+            'ec2': {'total': 0, 'breakdown': {}}  # Not used
+        }
+        running_hours = costs['ecs_fargate'].get('hours_per_month', 730)
     
     total = sum(c['total'] for c in costs.values())
     
@@ -307,7 +373,8 @@ def calculate_total_cost(config):
         'total_annual': round(total * 12, 2),
         'config': {
             'scheduler_enabled': config.get('scheduler_enabled', True),
-            'running_hours_per_month': costs['ecs_fargate'].get('hours_per_month', 730)
+            'use_ec2_alternative': use_ec2,
+            'running_hours_per_month': running_hours
         }
     }
 
@@ -322,9 +389,14 @@ def print_cost_report(result, original_config=None):
     config = result.get('config', {})
     if original_config is None:
         original_config = config
-    print(f"Scheduler Enabled: {config['scheduler_enabled']}")
-    if config['scheduler_enabled']:
-        print(f"Running Hours/Month: {config['running_hours_per_month']:.1f} hours")
+    
+    use_ec2 = config.get('use_ec2_alternative', False)
+    architecture = "EC2 Alternative" if use_ec2 else "ECS Fargate"
+    
+    print(f"Architecture: {architecture}")
+    print(f"Scheduler Enabled: {config.get('scheduler_enabled', False)}")
+    if config.get('scheduler_enabled', False):
+        print(f"Running Hours/Month: {config.get('running_hours_per_month', 0):.1f} hours")
         print(f"  (Business hours: Mon-Fri, 8 AM - 6 PM GMT+1)")
     else:
         print("Running Hours/Month: 730 hours (24/7)")
@@ -337,29 +409,45 @@ def print_cost_report(result, original_config=None):
     
     costs = result['breakdown']
     
-    # ECS Fargate
-    ecs = costs['ecs_fargate']
-    print(f"ECS Fargate Compute: ${ecs['total']:.2f}")
-    if 'services' in ecs:
-        for service, cost in ecs['services'].items():
-            print(f"  - {service}: ${cost['total']:.2f} ({cost['hours_per_month']:.1f} hrs)")
-    print()
-    
-    # NAT Gateway
-    nat = costs['nat_gateway']
-    print(f"NAT Gateway: ${nat['total']:.2f}")
-    if 'breakdown' in nat:
-        for item, cost in nat['breakdown'].items():
-            print(f"  - {item}: ${cost:.2f}")
-    print()
-    
-    # ALB
-    alb = costs['alb']
-    print(f"Application Load Balancer: ${alb['total']:.2f}")
-    if 'breakdown' in alb:
-        for item, cost in alb['breakdown'].items():
-            print(f"  - {item}: ${cost:.2f}")
-    print()
+    if use_ec2:
+        # EC2 costs
+        ec2 = costs['ec2']
+        print(f"EC2 Instance: ${ec2['total']:.2f}")
+        if 'breakdown' in ec2:
+            for item, value in ec2['breakdown'].items():
+                if item == 'instance_type':
+                    print(f"  - Instance Type: {value}")
+                elif item == 'hours_per_month':
+                    print(f"  - Running Hours: {value:.1f} hrs")
+                elif isinstance(value, (int, float)):
+                    print(f"  - {item.replace('_', ' ').title()}: ${value:.2f}")
+        print()
+    else:
+        # ECS Fargate
+        ecs = costs['ecs_fargate']
+        print(f"ECS Fargate Compute: ${ecs['total']:.2f}")
+        if 'services' in ecs:
+            for service, cost in ecs['services'].items():
+                print(f"  - {service}: ${cost['total']:.2f} ({cost['hours_per_month']:.1f} hrs)")
+        print()
+        
+        # NAT Gateway
+        nat = costs['nat_gateway']
+        if nat['total'] > 0:
+            print(f"NAT Gateway: ${nat['total']:.2f}")
+            if 'breakdown' in nat:
+                for item, cost in nat['breakdown'].items():
+                    print(f"  - {item}: ${cost:.2f}")
+            print()
+        
+        # ALB
+        alb = costs['alb']
+        if alb['total'] > 0:
+            print(f"Application Load Balancer: ${alb['total']:.2f}")
+            if 'breakdown' in alb:
+                for item, cost in alb['breakdown'].items():
+                    print(f"  - {item}: ${cost:.2f}")
+            print()
     
     # ECR
     ecr = costs['ecr']

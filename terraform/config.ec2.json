@@ -1,0 +1,47 @@
+{
+  "region": "eu-west-1",
+  "use_ec2_alternative": true,
+  "scheduler_enabled": true,
+  "start_time_utc": 7,
+  "stop_time_utc": 17,
+  "weekdays_only": true,
+  "ec2_instance_type": "t3.small",
+  "ec2_volume_size_gb": 30,
+  "services": {
+    "backend": {
+      "cpu": 512,
+      "memory": 1024,
+      "desired_count": 1
+    },
+    "frontend_admin": {
+      "cpu": 256,
+      "memory": 512,
+      "desired_count": 1
+    },
+    "frontend_client": {
+      "cpu": 256,
+      "memory": 512,
+      "desired_count": 1
+    }
+  },
+  "nat_gateway": {
+    "enabled": false
+  },
+  "alb": {
+    "enabled": false
+  },
+  "ecr": {
+    "repositories": 3,
+    "images_per_repo": 10,
+    "avg_image_size_gb": 0.5
+  },
+  "cloudwatch_logs": {
+    "ingestion_gb_per_month": 1,
+    "retention_days": 3
+  },
+  "data_transfer": {
+    "outbound_gb": 50,
+    "inter_az_gb": 10
+  }
+}
+

@@ -214,3 +214,27 @@ variable "scheduler_weekdays_only" {
   default     = true
 }
 
+variable "use_ec2_alternative" {
+  description = "Use EC2 instance instead of ECS Fargate (for cost savings)"
+  type        = bool
+  default     = false
+}
+
+variable "ec2_instance_type" {
+  description = "EC2 instance type (default: t3.small for cost optimization)"
+  type        = string
+  default     = "t3.small"
+}
+
+variable "ec2_key_name" {
+  description = "EC2 Key Pair name for SSH access"
+  type        = string
+  default     = ""
+}
+
+variable "ec2_volume_size" {
+  description = "EBS volume size in GB for EC2 instance"
+  type        = number
+  default     = 30
+}
+

@@ -150,10 +150,25 @@ output "scheduler_schedule" {
     start_time_utc = var.start_time_utc
     stop_time_utc  = var.stop_time_utc
     weekdays_only  = var.scheduler_weekdays_only
-    start_rule_arn = aws_cloudwatch_event_rule.start_ecs_services[0].arn
-    stop_rule_arn  = aws_cloudwatch_event_rule.stop_ecs_services[0].arn
+    start_rule_arn = var.use_ec2_alternative ? (var.scheduler_enabled ? aws_cloudwatch_event_rule.start_ec2_instance[0].arn : null) : (var.scheduler_enabled ? aws_cloudwatch_event_rule.start_ecs_services[0].arn : null)
+    stop_rule_arn  = var.use_ec2_alternative ? (var.scheduler_enabled ? aws_cloudwatch_event_rule.stop_ec2_instance[0].arn : null) : (var.scheduler_enabled ? aws_cloudwatch_event_rule.stop_ecs_services[0].arn : null)
   } : {
     enabled = false
   }
+}
+
+output "ec2_instance_id" {
+  description = "EC2 instance ID (if using EC2 alternative)"
+  value       = var.use_ec2_alternative ? aws_instance.app_server[0].id : null
+}
+
+output "ec2_public_ip" {
+  description = "EC2 instance public IP (if using EC2 alternative)"
+  value       = var.use_ec2_alternative ? aws_eip.app_server[0].public_ip : null
+}
+
+output "ec2_application_url" {
+  description = "Application URL for EC2 instance"
+  value       = var.use_ec2_alternative ? "http://${aws_eip.app_server[0].public_ip}" : null
 }
 
