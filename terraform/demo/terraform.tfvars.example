@@ -1,0 +1,36 @@
+# Demo Configuration - EC2 t3.small with Scheduler
+# Copy this file to terraform.tfvars and update with your values
+
+aws_region   = "eu-west-1"
+project_name = "demo-media01"
+environment  = "demo"
+
+# AWS Account ID
+aws_account_id = "123456789012"
+
+# VPC Configuration (simplified - only public subnet)
+vpc_cidr            = "10.0.0.0/16"
+availability_zones   = ["eu-west-1a", "eu-west-1b"]
+public_subnet_cidrs  = ["10.0.1.0/28", "10.0.2.0/28"]
+
+# EC2 Configuration
+ec2_instance_type = "t3.small"
+ec2_key_name      = "your-key-pair-name"  # REQUIRED: Create EC2 Key Pair first
+ec2_volume_size   = 30
+
+# Ports
+backend_port   = 8000
+frontend_port  = 3000
+
+# Logging
+log_retention_days = 3
+
+# Security
+allowed_cidr_blocks = ["0.0.0.0/0"]
+
+# Scheduler Configuration (saves ~43% on EC2 costs)
+scheduler_enabled      = true
+start_time_utc         = "7"   # 8 AM GMT+1
+stop_time_utc          = "17"  # 6 PM GMT+1
+scheduler_weekdays_only = true
+

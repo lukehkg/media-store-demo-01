@@ -1,0 +1,59 @@
+# Production Configuration - ECS Fargate
+# Copy this file to terraform.tfvars and update with your values
+
+aws_region   = "eu-west-1"
+project_name = "demo-media01"
+environment  = "prod"
+
+# AWS Account ID (required for ECR)
+aws_account_id = "123456789012"
+
+# VPC Configuration
+vpc_cidr            = "10.0.0.0/16"
+availability_zones   = ["eu-west-1a", "eu-west-1b"]
+public_subnet_cidrs  = ["10.0.1.0/28", "10.0.2.0/28"]
+private_subnet_cidrs = ["10.0.10.0/28", "10.0.20.0/28"]
+
+# NAT Gateway (single for cost optimization)
+enable_nat_gateway  = true
+single_nat_gateway  = true
+
+# ECS Configuration
+ecs_cluster_name = "demo-media01-cluster"
+
+# Docker Images (will be set by CI/CD or manually)
+backend_image        = ""
+frontend_admin_image = ""
+frontend_client_image = ""
+
+# Task Configuration
+backend_cpu    = 512
+backend_memory = 1024
+frontend_cpu   = 256
+frontend_memory = 512
+
+backend_desired_count        = 1
+frontend_admin_desired_count = 1
+frontend_client_desired_count = 1
+
+# Ports
+backend_port   = 8000
+frontend_port  = 3000
+
+# Logging
+log_retention_days = 7
+
+# Auto Scaling
+enable_auto_scaling      = true
+min_capacity            = 1
+max_capacity            = 5
+target_cpu_utilization   = 70
+target_memory_utilization = 80
+
+# Domain and Certificate (optional)
+domain_name    = ""
+certificate_arn = ""
+
+# Security
+allowed_cidr_blocks = ["0.0.0.0/0"]
+
