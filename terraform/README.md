@@ -1,14 +1,21 @@
 # Terraform Deployment Configurations
 
-This directory contains **two separate Terraform configurations** for different deployment scenarios:
+This directory contains **TWO completely separate Terraform configurations** in separate folders:
 
 ## 📁 Directory Structure
 
 ```
 terraform/
-├── production/     # ECS Fargate (Production) - No Lambda scheduler
-└── demo/          # EC2 t3.small (Demo/POC) - With Lambda scheduler
+│
+├── 📁 production/     ← USE THIS for Production (ECS Fargate, no scheduler)
+│   └── [11 files: versions.tf, variables.tf, vpc.tf, ecs.tf, etc.]
+│
+└── 📁 demo/          ← USE THIS for Demo (EC2 t3.small, with scheduler)
+    └── [8 files: versions.tf, variables.tf, vpc.tf, ec2.tf, lambda.tf, etc.]
 ```
+
+**⚠️ Note:** Old files in the root `terraform/` folder are legacy/reference files. 
+**Use ONLY the files inside `production/` or `demo/` folders.**
 
 ## 🚀 Production Deployment (`production/`)
 
