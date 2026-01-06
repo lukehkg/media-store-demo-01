@@ -1,0 +1,80 @@
+{
+  "services": [
+    {
+      "serviceName": "photo-portal-backend",
+      "taskDefinition": "photo-portal-backend",
+      "desiredCount": 2,
+      "launchType": "FARGATE",
+      "networkConfiguration": {
+        "awsvpcConfiguration": {
+          "subnets": ["subnet-xxx", "subnet-yyy"],
+          "securityGroups": ["sg-backend"],
+          "assignPublicIp": "ENABLED"
+        }
+      },
+      "loadBalancers": [
+        {
+          "targetGroupArn": "arn:aws:elasticloadbalancing:REGION:ACCOUNT:targetgroup/backend-tg/xxx",
+          "containerName": "backend",
+          "containerPort": 8000
+        }
+      ],
+      "deploymentConfiguration": {
+        "maximumPercent": 200,
+        "minimumHealthyPercent": 100
+      },
+      "enableExecuteCommand": true
+    },
+    {
+      "serviceName": "photo-portal-frontend-admin",
+      "taskDefinition": "photo-portal-frontend-admin",
+      "desiredCount": 1,
+      "launchType": "FARGATE",
+      "networkConfiguration": {
+        "awsvpcConfiguration": {
+          "subnets": ["subnet-xxx", "subnet-yyy"],
+          "securityGroups": ["sg-frontend"],
+          "assignPublicIp": "ENABLED"
+        }
+      },
+      "loadBalancers": [
+        {
+          "targetGroupArn": "arn:aws:elasticloadbalancing:REGION:ACCOUNT:targetgroup/admin-tg/xxx",
+          "containerName": "frontend-admin",
+          "containerPort": 3000
+        }
+      ],
+      "deploymentConfiguration": {
+        "maximumPercent": 200,
+        "minimumHealthyPercent": 100
+      },
+      "enableExecuteCommand": true
+    },
+    {
+      "serviceName": "photo-portal-frontend-client",
+      "taskDefinition": "photo-portal-frontend-client",
+      "desiredCount": 2,
+      "launchType": "FARGATE",
+      "networkConfiguration": {
+        "awsvpcConfiguration": {
+          "subnets": ["subnet-xxx", "subnet-yyy"],
+          "securityGroups": ["sg-frontend"],
+          "assignPublicIp": "ENABLED"
+        }
+      },
+      "loadBalancers": [
+        {
+          "targetGroupArn": "arn:aws:elasticloadbalancing:REGION:ACCOUNT:targetgroup/client-tg/xxx",
+          "containerName": "frontend-client",
+          "containerPort": 3001
+        }
+      ],
+      "deploymentConfiguration": {
+        "maximumPercent": 200,
+        "minimumHealthyPercent": 100
+      },
+      "enableExecuteCommand": true
+    }
+  ]
+}
+

@@ -1,11 +1,12 @@
-from fastapi import FastAPI, Request, Depends
+"""
+Clean, simple FastAPI backend - rebuilt from scratch
+Focus: Get login working first, then add features
+"""
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.middleware.tenant_middleware import TenantMiddleware
-from app.middleware.api_logging_middleware import ApiLoggingMiddleware
-from app.routers import admin, tenant, auth
 from app.database import engine, Base
-from app.config import settings
+from app.routers import auth, admin, tenant
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -14,56 +15,49 @@ logger = logging.getLogger(__name__)
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
+# Create FastAPI app
 app = FastAPI(
     title="Multi-Tenant Photo Portal API",
     description="White-label photo portal with Backblaze B2 integration",
-    version="1.0.0"
+    version="2.0.0"
 )
 
-# CORS configuration
-# For development, be permissive; restrict in production
-import os
-cors_origins = settings.CORS_ORIGINS
-# In development, add common localhost variants (both HTTP and HTTPS)
-if os.getenv("ENVIRONMENT", "development") == "development":
-    cors_origins = list(set(cors_origins + [
-        "http://localhost:3000",
-        "https://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://127.0.0.1:3000",
-        "http://admin.localhost:3000",
-        "https://admin.localhost:3000",
-        "http://*.localhost:3000",
-        "https://*.localhost:3000"
-    ]))
-
+# CORS Configuration - SIMPLE and PERMISSIVE for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=False,  # Must be False when using "*"
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+    expose_headers=["*"],  # Expose all headers
 )
 
-# Add API logging middleware (logs all requests)
-app.add_middleware(ApiLoggingMiddleware)
-
-# Add tenant middleware (must be before routers)
-app.add_middleware(TenantMiddleware)
-
-# Include routers
+# Include routers - AUTH FIRST (most important)
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(tenant.router, prefix="/api/tenant", tags=["Tenant"])
 
+# Root endpoint
 @app.get("/")
 async def root():
-    return {"message": "Multi-Tenant Photo Portal API", "version": "1.0.0"}
+    return {"message": "Multi-Tenant Photo Portal API", "version": "2.0.0", "status": "running"}
 
+@app.get("/api/version")
+async def get_version():
+    """Get API version information"""
+    return {
+        "api_version": "2.0.0",
+        "frontend_version": "1.0.0",
+        "platform": "Object Storage Reselling Platform",
+        "s3_compatible": True
+    }
+
+# Health check
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
+# Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)

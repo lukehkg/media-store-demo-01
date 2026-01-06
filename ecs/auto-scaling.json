@@ -1,0 +1,61 @@
+{
+  "scalingPolicies": [
+    {
+      "serviceName": "photo-portal-backend",
+      "scalableDimension": "ecs:service:DesiredCount",
+      "minCapacity": 2,
+      "maxCapacity": 10,
+      "targetTrackingScalingPolicies": [
+        {
+          "targetValue": 70.0,
+          "predefinedMetricSpecification": {
+            "predefinedMetricType": "ECSServiceAverageCPUUtilization"
+          },
+          "scaleInCooldown": 300,
+          "scaleOutCooldown": 60
+        }
+      ]
+    },
+    {
+      "serviceName": "photo-portal-frontend-admin",
+      "scalableDimension": "ecs:service:DesiredCount",
+      "minCapacity": 1,
+      "maxCapacity": 3,
+      "targetTrackingScalingPolicies": [
+        {
+          "targetValue": 70.0,
+          "predefinedMetricSpecification": {
+            "predefinedMetricType": "ECSServiceAverageCPUUtilization"
+          },
+          "scaleInCooldown": 300,
+          "scaleOutCooldown": 60
+        }
+      ]
+    },
+    {
+      "serviceName": "photo-portal-frontend-client",
+      "scalableDimension": "ecs:service:DesiredCount",
+      "minCapacity": 2,
+      "maxCapacity": 20,
+      "targetTrackingScalingPolicies": [
+        {
+          "targetValue": 70.0,
+          "predefinedMetricSpecification": {
+            "predefinedMetricType": "ECSServiceAverageCPUUtilization"
+          },
+          "scaleInCooldown": 300,
+          "scaleOutCooldown": 60
+        },
+        {
+          "targetValue": 2000.0,
+          "predefinedMetricSpecification": {
+            "predefinedMetricType": "ALBRequestCountPerTarget"
+          },
+          "scaleInCooldown": 300,
+          "scaleOutCooldown": 60
+        }
+      ]
+    }
+  ]
+}
+

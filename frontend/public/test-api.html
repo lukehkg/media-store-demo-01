@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct API Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px 0; background: #0066cc; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0052a3; }
+        pre { background: #f5f5f5; padding: 15px; border: 1px solid #ddd; overflow: auto; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Direct Backend API Test</h1>
+    <p>This page tests the backend API directly, bypassing Next.js completely.</p>
+    
+    <div>
+        <h2>Test 1: Backend Root</h2>
+        <button onclick="testRoot()">Test Backend Root</button>
+        <pre id="root-result"></pre>
+    </div>
+    
+    <div>
+        <h2>Test 2: Login</h2>
+        <button onclick="testLogin()">Test Login</button>
+        <pre id="login-result"></pre>
+    </div>
+    
+    <div>
+        <h2>Test 3: Get User Info</h2>
+        <input type="text" id="token-input" placeholder="Paste token here" style="width: 100%; padding: 5px; margin: 10px 0;">
+        <button onclick="testMe()">Test /api/auth/me</button>
+        <pre id="me-result"></pre>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        async function testRoot() {
+            const resultEl = document.getElementById('root-result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(API_URL + '/');
+                const data = await response.json();
+                resultEl.innerHTML = `<span class="success">✓ Success (${response.status})</span>\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">✗ Error</span>\n${error.message}\n${error.stack}`;
+            }
+        }
+        
+        async function testLogin() {
+            const resultEl = document.getElementById('login-result');
+            resultEl.textContent = 'Testing login...';
+            
+            try {
+                const params = new URLSearchParams();
+                params.append('username', 'admin@example.com');
+                params.append('password', 'admin123');
+                
+                console.log('Sending login request to:', API_URL + '/api/auth/login');
+                console.log('Body:', params.toString());
+                
+                const response = await fetch(API_URL + '/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params.toString()
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    resultEl.innerHTML = `<span class="error">✗ Failed (${response.status})</span>\n${text}`;
+                    return;
+                }
+                
+                const data = await response.json();
+                resultEl.innerHTML = `<span class="success">✓ Success (${response.status})</span>\nToken length: ${data.access_token?.length || 0}\n\nToken: ${data.access_token?.substring(0, 50)}...\n\nFull response:\n${JSON.stringify(data, null, 2)}`;
+                
+                // Auto-fill token input
+                if (data.access_token) {
+                    document.getElementById('token-input').value = data.access_token;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">✗ Error</span>\n${error.message}\n\nStack:\n${error.stack}`;
+                console.error('Login error:', error);
+            }
+        }
+        
+        async function testMe() {
+            const resultEl = document.getElementById('me-result');
+            const token = document.getElementById('token-input').value;
+            
+            if (!token) {
+                resultEl.textContent = 'Please paste a token first';
+                return;
+            }
+            
+            resultEl.textContent = 'Testing /api/auth/me...';
+            
+            try {
+                const response = await fetch(API_URL + '/api/auth/me', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    resultEl.innerHTML = `<span class="error">✗ Failed (${response.status})</span>\n${text}`;
+                    return;
+                }
+                
+                const data = await response.json();
+                resultEl.innerHTML = `<span class="success">✓ Success (${response.status})</span>\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">✗ Error</span>\n${error.message}\n${error.stack}`;
+            }
+        }
+    </script>
+</body>
+</html>
+

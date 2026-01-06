@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Backend Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; background: #0066cc; color: white; border: none; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 15px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>Simple Backend Test</h1>
+    <button onclick="test1()">Test 1: Backend Root (GET)</button>
+    <button onclick="test2()">Test 2: Login (POST)</button>
+    <pre id="result"></pre>
+
+    <script>
+        const API = 'http://localhost:8000';
+        const result = document.getElementById('result');
+
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            result.textContent += `[${time}] ${msg}\n`;
+            console.log(msg);
+        }
+
+        function clear() {
+            result.textContent = '';
+        }
+
+        async function test1() {
+            clear();
+            log('Test 1: Testing backend root...');
+            try {
+                log('Sending GET request to: ' + API + '/');
+                const start = Date.now();
+                const response = await fetch(API + '/', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const elapsed = Date.now() - start;
+                log(`Response received in ${elapsed}ms`);
+                log(`Status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    log(`ERROR: ${response.status} ${response.statusText}`);
+                    return;
+                }
+                
+                const data = await response.json();
+                log('SUCCESS: ' + JSON.stringify(data));
+            } catch (error) {
+                log('EXCEPTION: ' + error.message);
+                log('Stack: ' + error.stack);
+            }
+        }
+
+        async function test2() {
+            clear();
+            log('Test 2: Testing login...');
+            try {
+                const params = new URLSearchParams();
+                params.append('username', 'admin@example.com');
+                params.append('password', 'admin123');
+                
+                log('Sending POST request to: ' + API + '/api/auth/login');
+                log('Body: ' + params.toString());
+                
+                // Add timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                    log('ERROR: Request timed out after 10 seconds');
+                }, 10000);
+                
+                const start = Date.now();
+                const response = await fetch(API + '/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params.toString(),
+                    signal: controller.signal,
+                    mode: 'cors'  // Explicit CORS mode
+                });
+                clearTimeout(timeoutId);
+                const elapsed = Date.now() - start;
+                log(`Response received in ${elapsed}ms`);
+                log(`Status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    log(`ERROR: ${response.status} - ${text}`);
+                    return;
+                }
+                
+                const data = await response.json();
+                log('SUCCESS! Token length: ' + (data.access_token?.length || 0));
+                log('Token: ' + (data.access_token?.substring(0, 50) || 'none') + '...');
+            } catch (error) {
+                log('EXCEPTION: ' + error.message);
+                log('Type: ' + error.constructor.name);
+                log('Stack: ' + error.stack);
+            }
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            log('Page loaded. Click buttons to test.');
+            log('Backend URL: ' + API);
+        });
+    </script>
+</body>
+</html>
+
