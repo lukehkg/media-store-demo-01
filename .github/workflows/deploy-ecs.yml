@@ -1,24 +1,23 @@
 name: Deploy to AWS ECS
 
 on:
-  # DISABLED: Automatic triggers disabled - only manual trigger available
-  # push:
-  #   branches:
-  #     - main
-  #     - develop
-  workflow_dispatch:  # Manual trigger only - requires authorization
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
 
 env:
-  AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+  AWS_REGION: eu-west-1
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION || 'eu-west-1' }}.amazonaws.com
-  ECS_CLUSTER: ${{ vars.ECS_CLUSTER || 'demo-media01-cluster' }}
-  ECS_SERVICE_BACKEND: ${{ vars.ECS_SERVICE_BACKEND || 'demo-media01-backend-dev' }}
-  ECS_SERVICE_FRONTEND_ADMIN: ${{ vars.ECS_SERVICE_FRONTEND_ADMIN || 'demo-media01-frontend-admin-dev' }}
-  ECS_SERVICE_FRONTEND_CLIENT: ${{ vars.ECS_SERVICE_FRONTEND_CLIENT || 'demo-media01-frontend-client-dev' }}
-  ECR_REPOSITORY_BACKEND: ${{ vars.ECR_REPOSITORY_BACKEND || 'demo-media01-backend' }}
-  ECR_REPOSITORY_FRONTEND_ADMIN: ${{ vars.ECR_REPOSITORY_FRONTEND_ADMIN || 'demo-media01-frontend-admin' }}
-  ECR_REPOSITORY_FRONTEND_CLIENT: ${{ vars.ECR_REPOSITORY_FRONTEND_CLIENT || 'demo-media01-frontend-client' }}
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
+  ECS_CLUSTER: demo-media01-cluster
+  ECS_SERVICE_BACKEND: demo-backend-demo
+  ECS_SERVICE_FRONTEND_ADMIN: demo-frontend-admin-demo
+  ECS_SERVICE_FRONTEND_CLIENT: demo-frontend-client-demo
+  ECR_REPOSITORY_BACKEND: demo-backend
+  ECR_REPOSITORY_FRONTEND_ADMIN: demo-frontend-admin
+  ECR_REPOSITORY_FRONTEND_CLIENT: demo-frontend-client
 
 jobs:
   build-and-push-backend:
