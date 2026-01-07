@@ -65,3 +65,11 @@ certificate_arn = ""
 
 # Security
 allowed_cidr_blocks = ["0.0.0.0/0"]
+
+# Database Configuration (REQUIRED)
+database_user     = "photoportal"
+database_password = "your-secure-password-here"  # REQUIRED: Change this!
+database_name     = "photoportal"
+
+# Application Secrets (REQUIRED)
+secret_key = "your-secret-key-for-jwt-tokens-change-in-production"  # REQUIRED: Change this!

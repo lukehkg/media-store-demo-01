@@ -108,8 +108,63 @@ resource "aws_ecs_task_definition" "backend" {
 
   container_definitions = jsonencode([
     {
+      name  = "postgres"
+      image = "postgres:15-alpine"
+      
+      essential = true
+
+      environment = [
+        {
+          name  = "POSTGRES_USER"
+          value = var.database_user
+        },
+        {
+          name  = "POSTGRES_PASSWORD"
+          value = var.database_password
+        },
+        {
+          name  = "POSTGRES_DB"
+          value = var.database_name
+        }
+      ]
+
+      portMappings = [
+        {
+          containerPort = 5432
+          hostPort      = 5432
+          protocol      = "tcp"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.backend.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "postgres"
+        }
+      }
+
+      healthCheck = {
+        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user}"]
+        interval    = 30
+        timeout     = 5
+        retries     = 3
+        startPeriod = 30
+      }
+    },
+    {
       name  = "backend"
       image = var.backend_image != "" ? var.backend_image : "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${aws_ecr_repository.backend.name}:latest"
+
+      essential = true
+
+      dependsOn = [
+        {
+          containerName = "postgres"
+          condition     = "HEALTHY"
+        }
+      ]
 
       portMappings = [
         {
@@ -123,6 +178,14 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "ENVIRONMENT"
           value = var.environment
+        },
+        {
+          name  = "DATABASE_URL"
+          value = "postgresql://${var.database_user}:${var.database_password}@localhost:5432/${var.database_name}"
+        },
+        {
+          name  = "SECRET_KEY"
+          value = var.secret_key
         }
       ]
 

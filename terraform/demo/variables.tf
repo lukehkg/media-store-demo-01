@@ -211,3 +211,30 @@ variable "allowed_cidr_blocks" {
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
+
+# Database Configuration
+variable "database_user" {
+  description = "PostgreSQL database user"
+  type        = string
+  default     = "photoportal"
+}
+
+variable "database_password" {
+  description = "PostgreSQL database password (REQUIRED - set in terraform.tfvars)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "database_name" {
+  description = "PostgreSQL database name"
+  type        = string
+  default     = "photoportal"
+}
+
+variable "secret_key" {
+  description = "Secret key for JWT tokens (REQUIRED - set in terraform.tfvars)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
