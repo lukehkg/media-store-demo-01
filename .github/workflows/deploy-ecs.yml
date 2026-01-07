@@ -9,8 +9,6 @@ on:
 
 env:
   AWS_REGION: eu-west-1
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
   ECS_CLUSTER: demo-media01-cluster
   ECS_SERVICE_BACKEND: demo-backend-demo
   ECS_SERVICE_FRONTEND_ADMIN: demo-frontend-admin-demo
@@ -23,6 +21,7 @@ jobs:
   build-and-push-backend:
     name: Build and Push Backend
     runs-on: ubuntu-latest
+    environment: DEMO
     defaults:
       run:
         working-directory: ./backend
@@ -37,6 +36,10 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set ECR Registry
+        run: |
+          echo "ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_ENV
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -115,6 +118,7 @@ jobs:
   build-and-push-frontend-admin:
     name: Build and Push Frontend Admin
     runs-on: ubuntu-latest
+    environment: DEMO
     defaults:
       run:
         working-directory: ./frontend-admin
@@ -129,6 +133,10 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set ECR Registry
+        run: |
+          echo "ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_ENV
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -206,6 +214,7 @@ jobs:
   build-and-push-frontend-client:
     name: Build and Push Frontend Client
     runs-on: ubuntu-latest
+    environment: DEMO
     defaults:
       run:
         working-directory: ./frontend-client
@@ -220,6 +229,10 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set ECR Registry
+        run: |
+          echo "ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_ENV
 
       - name: Login to Amazon ECR
         id: login-ecr

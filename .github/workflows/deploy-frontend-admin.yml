@@ -13,8 +13,6 @@ on:
 
 env:
   AWS_REGION: eu-west-1
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
   ECR_REPOSITORY: demo-frontend-admin
   ECS_SERVICE: demo-frontend-admin-demo
   ECS_CLUSTER: demo-media01-cluster
@@ -23,6 +21,7 @@ jobs:
   deploy:
     name: Deploy Frontend Admin
     runs-on: ubuntu-latest
+    environment: DEMO
     
     steps:
     - name: Checkout
@@ -34,6 +33,10 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+
+    - name: Set ECR Registry
+      run: |
+        echo "ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_ENV
 
     - name: Login to Amazon ECR
       id: login-ecr

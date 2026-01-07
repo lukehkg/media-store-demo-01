@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Name of the project (used as prefix for all resources)"
   type        = string
-  default     = "demo-media01"
+  default     = "demo"
 }
 
 variable "environment" {
