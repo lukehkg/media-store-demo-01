@@ -96,13 +96,13 @@ resource "aws_iam_role" "ecs_task" {
   }
 }
 
-# ECS Task Definition - Backend
+# ECS Task Definition - Backend (with PostgreSQL container)
 resource "aws_ecs_task_definition" "backend" {
   family                   = "${var.project_name}-backend-${var.environment}"
   network_mode             = "bridge"
   requires_compatibilities = ["EC2"]
-  cpu                      = var.backend_cpu + 256  # Add CPU for PostgreSQL container
-  memory                   = var.backend_memory + 512  # Add memory for PostgreSQL container
+  cpu                      = var.backend_cpu + 512  # Add CPU for PostgreSQL container (512 = 0.5 vCPU)
+  memory                   = var.backend_memory + 1024  # Add memory for PostgreSQL container (1GB)
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
   task_role_arn           = aws_iam_role.ecs_task.arn
 
@@ -112,6 +112,10 @@ resource "aws_ecs_task_definition" "backend" {
       image = "postgres:15-alpine"
       
       essential = true
+
+      # Resource limits for PostgreSQL
+      cpu    = 256  # 0.25 vCPU
+      memory = 512  # 512 MB
 
       environment = [
         {
@@ -141,11 +145,11 @@ resource "aws_ecs_task_definition" "backend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user}"]
+        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user} -d ${var.database_name} || exit 1"]
         interval    = 30
-        timeout     = 5
-        retries     = 3
-        startPeriod = 30
+        timeout     = 10
+        retries     = 5
+        startPeriod = 60  # Increased to allow PostgreSQL to fully initialize
       }
     },
     {
@@ -153,6 +157,10 @@ resource "aws_ecs_task_definition" "backend" {
       image = var.backend_image != "" ? var.backend_image : "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${aws_ecr_repository.backend.name}:latest"
 
       essential = true
+
+      # Resource limits for backend
+      cpu    = var.backend_cpu
+      memory = var.backend_memory
 
       dependsOn = [
         {
@@ -404,4 +412,3 @@ resource "aws_ecs_service" "frontend_client" {
     ResourcePrefix = var.project_name
   }
 }
-
