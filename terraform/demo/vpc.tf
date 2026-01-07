@@ -1,4 +1,4 @@
-# VPC with public and private subnets for ECS
+# VPC with public and private subnets for ECS EC2 instances
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -36,7 +36,7 @@ resource "aws_subnet" "public" {
   }
 }
 
-# Private Subnets (for ECS tasks)
+# Private Subnets (for ECS EC2 instances)
 resource "aws_subnet" "private" {
   count             = length(var.private_subnet_cidrs)
   vpc_id            = aws_vpc.main.id

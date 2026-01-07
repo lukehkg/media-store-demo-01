@@ -34,10 +34,10 @@ resource "aws_security_group" "alb" {
   }
 }
 
-# Security Group for Backend ECS Tasks
-resource "aws_security_group" "backend_ecs" {
-  name        = "${var.project_name}-backend-ecs-sg-${var.environment}"
-  description = "Security group for backend ECS tasks"
+# Security Group for ECS EC2 Instances
+resource "aws_security_group" "ecs_instances" {
+  name        = "${var.project_name}-ecs-instances-sg-${var.environment}"
+  description = "Security group for ECS EC2 instances"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -48,34 +48,22 @@ resource "aws_security_group" "backend_ecs" {
     security_groups = [aws_security_group.alb.id]
   }
 
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name          = "${var.project_name}-backend-ecs-sg-${var.environment}"
-    ResourcePrefix = var.project_name
-  }
-}
-
-# Security Group for Frontend ECS Tasks
-resource "aws_security_group" "frontend_ecs" {
-  name        = "${var.project_name}-frontend-ecs-sg-${var.environment}"
-  description = "Security group for frontend ECS tasks"
-  vpc_id      = aws_vpc.main.id
-
   ingress {
     description     = "Frontend port from ALB"
     from_port       = var.frontend_port
-    to_port         = var.frontend_port
+    to_port         = var.frontend_port + 1
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
 
+  ingress {
+    description = "SSH from allowed CIDR blocks"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = var.allowed_cidr_blocks
+  }
+
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -85,7 +73,7 @@ resource "aws_security_group" "frontend_ecs" {
   }
 
   tags = {
-    Name          = "${var.project_name}-frontend-ecs-sg-${var.environment}"
+    Name          = "${var.project_name}-ecs-instances-sg-${var.environment}"
     ResourcePrefix = var.project_name
   }
 }

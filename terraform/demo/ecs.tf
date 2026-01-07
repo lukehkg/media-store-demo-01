@@ -29,7 +29,7 @@ resource "aws_cloudwatch_log_group" "frontend_client" {
   }
 }
 
-# ECS Cluster with Spot Capacity Provider
+# ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = var.ecs_cluster_name
 
@@ -41,25 +41,6 @@ resource "aws_ecs_cluster" "main" {
   tags = {
     Name          = "${var.project_name}-cluster-${var.environment}"
     ResourcePrefix = var.project_name
-  }
-}
-
-# Cluster Capacity Providers (using built-in FARGATE_SPOT and FARGATE)
-resource "aws_ecs_cluster_capacity_providers" "main" {
-  cluster_name = aws_ecs_cluster.main.name
-
-  capacity_providers = ["FARGATE_SPOT", "FARGATE"]
-
-  default_capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
-    weight            = var.spot_weight
-    base              = var.spot_base_capacity
-  }
-
-  default_capacity_provider_strategy {
-    capacity_provider = "FARGATE"
-    weight            = var.fargate_weight
-    base              = var.fargate_base_capacity
   }
 }
 
@@ -118,8 +99,8 @@ resource "aws_iam_role" "ecs_task" {
 # ECS Task Definition - Backend
 resource "aws_ecs_task_definition" "backend" {
   family                   = "${var.project_name}-backend-${var.environment}"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
+  network_mode             = "bridge"
+  requires_compatibilities = ["EC2"]
   cpu                      = var.backend_cpu
   memory                   = var.backend_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
@@ -133,6 +114,7 @@ resource "aws_ecs_task_definition" "backend" {
       portMappings = [
         {
           containerPort = var.backend_port
+          hostPort      = var.backend_port
           protocol      = "tcp"
         }
       ]
@@ -172,8 +154,8 @@ resource "aws_ecs_task_definition" "backend" {
 # ECS Task Definition - Frontend Admin
 resource "aws_ecs_task_definition" "frontend_admin" {
   family                   = "${var.project_name}-frontend-admin-${var.environment}"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
+  network_mode             = "bridge"
+  requires_compatibilities = ["EC2"]
   cpu                      = var.frontend_cpu
   memory                   = var.frontend_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
@@ -187,6 +169,7 @@ resource "aws_ecs_task_definition" "frontend_admin" {
       portMappings = [
         {
           containerPort = var.frontend_port
+          hostPort      = var.frontend_port
           protocol      = "tcp"
         }
       ]
@@ -230,8 +213,8 @@ resource "aws_ecs_task_definition" "frontend_admin" {
 # ECS Task Definition - Frontend Client
 resource "aws_ecs_task_definition" "frontend_client" {
   family                   = "${var.project_name}-frontend-client-${var.environment}"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
+  network_mode             = "bridge"
+  requires_compatibilities = ["EC2"]
   cpu                      = var.frontend_cpu
   memory                   = var.frontend_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
@@ -245,6 +228,7 @@ resource "aws_ecs_task_definition" "frontend_client" {
       portMappings = [
         {
           containerPort = var.frontend_port
+          hostPort      = var.frontend_port + 1
           protocol      = "tcp"
         }
       ]
@@ -285,30 +269,13 @@ resource "aws_ecs_task_definition" "frontend_client" {
   }
 }
 
-# ECS Service - Backend (with Spot capacity provider strategy)
+# ECS Service - Backend
 resource "aws_ecs_service" "backend" {
   name            = "${var.project_name}-backend-${var.environment}"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.backend.arn
   desired_count   = var.backend_desired_count
-
-  capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
-    weight            = var.spot_weight
-    base              = var.spot_base_capacity
-  }
-
-  capacity_provider_strategy {
-    capacity_provider = "FARGATE"
-    weight            = var.fargate_weight
-    base              = var.fargate_base_capacity
-  }
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.backend_ecs.id]
-    assign_public_ip = false
-  }
+  launch_type     = "EC2"
 
   load_balancer {
     target_group_arn = aws_lb_target_group.backend.arn
@@ -318,7 +285,8 @@ resource "aws_ecs_service" "backend" {
 
   depends_on = [
     aws_lb_listener.http,
-    aws_iam_role_policy_attachment.ecs_task_execution
+    aws_iam_role_policy_attachment.ecs_task_execution,
+    aws_autoscaling_group.ecs_instances
   ]
 
   tags = {
@@ -327,30 +295,13 @@ resource "aws_ecs_service" "backend" {
   }
 }
 
-# ECS Service - Frontend Admin (with Spot capacity provider strategy)
+# ECS Service - Frontend Admin
 resource "aws_ecs_service" "frontend_admin" {
   name            = "${var.project_name}-frontend-admin-${var.environment}"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.frontend_admin.arn
   desired_count   = var.frontend_admin_desired_count
-
-  capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
-    weight            = var.spot_weight
-    base              = var.spot_base_capacity
-  }
-
-  capacity_provider_strategy {
-    capacity_provider = "FARGATE"
-    weight            = var.fargate_weight
-    base              = var.fargate_base_capacity
-  }
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.frontend_ecs.id]
-    assign_public_ip = false
-  }
+  launch_type     = "EC2"
 
   load_balancer {
     target_group_arn = aws_lb_target_group.frontend_admin.arn
@@ -360,7 +311,8 @@ resource "aws_ecs_service" "frontend_admin" {
 
   depends_on = [
     aws_lb_listener.http,
-    aws_iam_role_policy_attachment.ecs_task_execution
+    aws_iam_role_policy_attachment.ecs_task_execution,
+    aws_autoscaling_group.ecs_instances
   ]
 
   tags = {
@@ -369,30 +321,13 @@ resource "aws_ecs_service" "frontend_admin" {
   }
 }
 
-# ECS Service - Frontend Client (with Spot capacity provider strategy)
+# ECS Service - Frontend Client
 resource "aws_ecs_service" "frontend_client" {
   name            = "${var.project_name}-frontend-client-${var.environment}"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.frontend_client.arn
   desired_count   = var.frontend_client_desired_count
-
-  capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
-    weight            = var.spot_weight
-    base              = var.spot_base_capacity
-  }
-
-  capacity_provider_strategy {
-    capacity_provider = "FARGATE"
-    weight            = var.fargate_weight
-    base              = var.fargate_base_capacity
-  }
-
-  network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.frontend_ecs.id]
-    assign_public_ip = false
-  }
+  launch_type     = "EC2"
 
   load_balancer {
     target_group_arn = aws_lb_target_group.frontend_client.arn
@@ -402,7 +337,8 @@ resource "aws_ecs_service" "frontend_client" {
 
   depends_on = [
     aws_lb_listener.http,
-    aws_iam_role_policy_attachment.ecs_task_execution
+    aws_iam_role_policy_attachment.ecs_task_execution,
+    aws_autoscaling_group.ecs_instances
   ]
 
   tags = {

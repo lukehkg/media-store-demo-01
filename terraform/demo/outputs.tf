@@ -78,14 +78,22 @@ output "ecr_login_command" {
   value       = "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
 }
 
-output "spot_capacity_provider_info" {
-  description = "Information about Spot capacity provider configuration"
+output "autoscaling_group_name" {
+  description = "Name of the Auto Scaling Group for ECS instances"
+  value       = aws_autoscaling_group.ecs_instances.name
+}
+
+output "ec2_instance_info" {
+  description = "Information about EC2 instances in ECS cluster"
   value = {
-    spot_weight         = var.spot_weight
-    spot_base_capacity  = var.spot_base_capacity
-    fargate_weight      = var.fargate_weight
-    fargate_base_capacity = var.fargate_base_capacity
-    note                = "Tasks will prefer Fargate Spot (70% savings) with Fargate as fallback"
+    instance_type        = var.ec2_instance_type
+    min_capacity         = var.min_capacity
+    max_capacity         = var.max_capacity
+    desired_capacity     = var.desired_capacity
+    on_demand_percentage = var.on_demand_percentage
+    spot_percentage      = 100 - var.on_demand_percentage
+    spot_max_price       = var.spot_max_price_per_hour != "" ? var.spot_max_price_per_hour : "on-demand price"
+    note                 = "EC2 instances run ECS tasks with auto-scaling"
   }
 }
 

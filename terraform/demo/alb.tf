@@ -22,7 +22,7 @@ resource "aws_lb_target_group" "backend" {
   port        = var.backend_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
-  target_type = "ip"
+  target_type = "instance"
 
   health_check {
     enabled             = true
@@ -49,7 +49,7 @@ resource "aws_lb_target_group" "frontend_admin" {
   port        = var.frontend_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
-  target_type = "ip"
+  target_type = "instance"
 
   health_check {
     enabled             = true
@@ -73,10 +73,10 @@ resource "aws_lb_target_group" "frontend_admin" {
 # Target Group for Frontend Client
 resource "aws_lb_target_group" "frontend_client" {
   name        = "${var.project_name}-frontend-client-tg-${var.environment}"
-  port        = var.frontend_port
+  port        = var.frontend_port + 1
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
-  target_type = "ip"
+  target_type = "instance"
 
   health_check {
     enabled             = true

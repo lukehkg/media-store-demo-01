@@ -166,29 +166,41 @@ variable "target_memory_utilization" {
   default     = 80
 }
 
-# Spot Instance Configuration
-variable "spot_weight" {
-  description = "Weight for Fargate Spot capacity provider (higher = more Spot instances)"
-  type        = number
-  default     = 4
+# EC2 Instance Configuration for ECS Cluster
+variable "ec2_instance_type" {
+  description = "EC2 instance type for ECS cluster (t3.small for cost optimization)"
+  type        = string
+  default     = "t3.small"
 }
 
-variable "spot_base_capacity" {
-  description = "Base capacity for Fargate Spot (minimum tasks on Spot)"
-  type        = number
-  default     = 0
+variable "ec2_key_name" {
+  description = "EC2 Key Pair name for SSH access (REQUIRED)"
+  type        = string
+  default     = ""
 }
 
-variable "fargate_weight" {
-  description = "Weight for Fargate capacity provider (fallback for Spot)"
+variable "ec2_volume_size" {
+  description = "EBS volume size in GB for EC2 instances"
+  type        = number
+  default     = 30
+}
+
+variable "desired_capacity" {
+  description = "Desired number of EC2 instances in auto-scaling group"
   type        = number
   default     = 1
 }
 
-variable "fargate_base_capacity" {
-  description = "Base capacity for Fargate (minimum tasks on regular Fargate)"
+variable "on_demand_percentage" {
+  description = "Percentage of on-demand instances (rest will be Spot). 0 = all Spot, 100 = all on-demand"
   type        = number
-  default     = 1
+  default     = 0  # Use all Spot instances for maximum savings
+}
+
+variable "spot_max_price_per_hour" {
+  description = "Maximum price per hour for Spot instances (leave empty to use on-demand price)"
+  type        = string
+  default     = ""
 }
 
 variable "domain_name" {

@@ -1,4 +1,4 @@
-# Demo Configuration - ECS Fargate with Spot Instances
+# Demo Configuration - ECS with EC2 Spot Instances
 # Copy this file to terraform.tfvars and update with your values
 
 aws_region   = "eu-west-1"
@@ -40,18 +40,25 @@ frontend_port  = 3000
 # Logging
 log_retention_days = 3
 
-# Auto Scaling
+# Auto Scaling (ECS Services)
 enable_auto_scaling      = true
 min_capacity            = 1
 max_capacity            = 3
 target_cpu_utilization   = 70
 target_memory_utilization = 80
 
-# Spot Instance Configuration (70% cost savings vs regular Fargate)
-spot_weight          = 4  # Higher weight = prefer Spot instances
-spot_base_capacity   = 0  # Minimum tasks on Spot (0 = can use all Spot)
-fargate_weight       = 1  # Lower weight = fallback to regular Fargate
-fargate_base_capacity = 1 # Minimum tasks on regular Fargate (ensures availability)
+# EC2 Instance Configuration (for ECS cluster)
+ec2_instance_type = "t3.small"  # EC2 instance type for ECS cluster
+ec2_key_name      = "your-key-pair-name"  # REQUIRED: Create EC2 Key Pair first
+ec2_volume_size   = 30
+
+# Auto Scaling Group Configuration (EC2 instances)
+desired_capacity     = 1  # Desired number of EC2 instances
+on_demand_percentage = 0  # 0 = all Spot instances (maximum savings), 100 = all on-demand
+
+# Spot Instance Pricing (optional)
+# Leave empty to use on-demand price as maximum
+spot_max_price_per_hour = ""  # Empty = use on-demand price as max
 
 # Domain and Certificate (optional)
 domain_name    = ""
