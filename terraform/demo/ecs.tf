@@ -129,6 +129,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "POSTGRES_DB"
           value = var.database_name
+        },
+        {
+          name  = "POSTGRES_HOST_AUTH_METHOD"
+          value = "scram-sha-256"
         }
       ]
 
@@ -145,11 +149,11 @@ resource "aws_ecs_task_definition" "backend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user} -d ${var.database_name} -h localhost || exit 1"]
+        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user} -d ${var.database_name} || exit 1"]
         interval    = 30
         timeout     = 10
         retries     = 5
-        startPeriod = 90  # Increased to allow PostgreSQL to fully initialize and be stable
+        startPeriod = 120  # Increased to allow PostgreSQL to fully initialize and be stable
       }
     },
     {
