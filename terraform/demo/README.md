@@ -25,8 +25,9 @@ This Terraform configuration deploys a cost-optimized demo/POC environment using
 - **Total: ~$20-30/month** (saves ~$33/month without NAT Gateway)
 
 **Savings vs On-Demand EC2:** Up to 90% reduction  
-**Savings vs ECS Fargate:** ~60% reduction  
-**Savings vs Production Setup:** ~70% reduction
+**Savings vs ECS Fargate:** ~70% reduction  
+**Savings vs Production Setup:** ~80% reduction  
+**Savings vs Private Subnet Setup:** ~$33/month (no NAT Gateway)
 
 ## Features
 
@@ -35,6 +36,7 @@ This Terraform configuration deploys a cost-optimized demo/POC environment using
 - ✅ **Auto-scaling** for EC2 instances (1-3 instances)
 - ✅ **Auto-scaling** for ECS services (1-3 tasks per service)
 - ✅ **Spot Instances** for maximum cost savings (up to 90%)
+- ✅ **Public Subnets Only** - no NAT Gateway needed (saves ~$33/month)
 - ✅ **ALB** for load balancing
 - ✅ **Multi-AZ** deployment
 - ✅ **CI/CD Ready** (GitHub Actions compatible)
@@ -158,10 +160,11 @@ After deployment, run `terraform output` to see:
 ## Notes
 
 - **Spot Instances**: Up to 90% cost savings, but can be interrupted
+- **Public Subnets**: EC2 instances in public subnets (no NAT Gateway needed)
 - **Auto-scaling**: Automatically scales EC2 instances and ECS tasks
 - **High Availability**: Multi-AZ deployment
 - **CI/CD Ready**: ECR integration for automated deployments
-- **Cost Optimized**: Single NAT Gateway, Spot instances, shorter log retention
+- **Cost Optimized**: No NAT Gateway (~$33/month savings), Spot instances, shorter log retention
 
 ## Troubleshooting
 
