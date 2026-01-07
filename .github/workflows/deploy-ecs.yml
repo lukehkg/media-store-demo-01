@@ -20,7 +20,7 @@ on:
 
 env:
   AWS_REGION: eu-west-1
-  ECS_CLUSTER: demo-media01-cluster
+  ECS_CLUSTER: dev02-cluster
   ECS_SERVICE_BACKEND: demo-backend-demo
   ECS_SERVICE_FRONTEND_ADMIN: demo-frontend-admin-demo
   ECS_SERVICE_FRONTEND_CLIENT: demo-frontend-client-demo
