@@ -1,11 +1,12 @@
 name: Deploy to AWS ECS
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-  workflow_dispatch:
+  # DISABLED: Automatic triggers disabled - only manual trigger available
+  # push:
+  #   branches:
+  #     - main
+  #     - develop
+  workflow_dispatch:  # Manual trigger only - requires authorization
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
