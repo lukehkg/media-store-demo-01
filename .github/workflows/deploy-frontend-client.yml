@@ -10,6 +10,11 @@ on:
   #     - 'frontend-shared/**'
   #     - '.github/workflows/deploy-frontend-client.yml'
   workflow_dispatch:  # Manual trigger only - requires authorization
+    inputs:
+      image_tag:
+        description: 'Docker image tag (default: git commit SHA)'
+        required: false
+        default: ''
 
 env:
   AWS_REGION: eu-west-1
@@ -44,7 +49,7 @@ jobs:
 
     - name: Build, tag, and push image to Amazon ECR
       env:
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{ inputs.image_tag != '' && inputs.image_tag || github.sha }}
       run: |
         echo "Building Docker image for frontend-client..."
         echo "ECR Registry: $ECR_REGISTRY"
@@ -91,7 +96,7 @@ jobs:
     - name: Update ECS task definition with new image
       id: task-def
       env:
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{ inputs.image_tag != '' && inputs.image_tag || github.sha }}
       run: |
         echo "Getting current task definition..."
         TASK_DEF=$(aws ecs describe-task-definition \
