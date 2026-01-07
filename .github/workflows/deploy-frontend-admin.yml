@@ -18,7 +18,7 @@ on:
 env:
   AWS_REGION: eu-west-1
   ECR_REPOSITORY: dev02-frontend-admin
-  ECS_SERVICE: demo-frontend-admin-demo
+  ECS_SERVICE: dev02-frontend-admin-env02
   ECS_CLUSTER: dev02-cluster
 
 jobs:
