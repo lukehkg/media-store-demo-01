@@ -169,7 +169,7 @@ resource "aws_ecs_task_definition" "backend" {
       dependsOn = [
         {
           containerName = "postgres"
-          condition     = "HEALTHY"
+          condition     = "START"
         }
       ]
 
@@ -210,7 +210,7 @@ resource "aws_ecs_task_definition" "backend" {
         interval    = 30
         timeout     = 10
         retries     = 5
-        startPeriod = 120  # Increased to allow database initialization with retries
+        startPeriod = 180  # Increased to allow database initialization with retries (3 minutes)
       }
     }
   ])
