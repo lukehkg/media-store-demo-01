@@ -188,7 +188,7 @@ resource "aws_ecs_task_definition" "backend" {
         },
         {
           name  = "DATABASE_URL"
-          value = "postgresql://${var.database_user}:${var.database_password}@localhost:5432/${var.database_name}"
+          value = "postgresql://${var.database_user}:${replace(replace(replace(var.database_password, "@", "%40"), ":", "%3A"), "/", "%2F")}@localhost:5432/${var.database_name}"
         },
         {
           name  = "SECRET_KEY"
