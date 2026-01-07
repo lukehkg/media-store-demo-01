@@ -173,7 +173,7 @@ resource "aws_ecs_task_definition" "backend" {
       dependsOn = [
         {
           containerName = "postgres"
-          condition     = "START"
+          condition     = "HEALTHY"
         }
       ]
 
