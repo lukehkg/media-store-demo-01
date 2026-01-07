@@ -8,12 +8,33 @@ from fastapi.responses import JSONResponse
 from app.database import engine, Base
 from app.routers import auth, admin, tenant
 import logging
+import time
+from sqlalchemy.exc import OperationalError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Retry database connection with exponential backoff
+def init_database(max_retries=10, retry_delay=5):
+    """Initialize database tables with retry logic for ECS deployment"""
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Attempting to connect to database (attempt {attempt + 1}/{max_retries})...")
+            Base.metadata.create_all(bind=engine)
+            logger.info("✅ Database tables created successfully!")
+            return True
+        except OperationalError as e:
+            if attempt < max_retries - 1:
+                wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+                logger.warning(f"Database not ready yet, retrying in {wait_time} seconds... Error: {e}")
+                time.sleep(wait_time)
+            else:
+                logger.error(f"❌ Failed to connect to database after {max_retries} attempts: {e}")
+                raise
+        except Exception as e:
+            logger.error(f"❌ Unexpected error initializing database: {e}")
+            raise
+    return False
 
 # Create FastAPI app
 app = FastAPI(
@@ -55,7 +76,28 @@ async def get_version():
 # Health check
 @app.get("/health")
 async def health():
-    return {"status": "healthy"}
+    """Health check endpoint - also checks database connection"""
+    try:
+        # Test database connection
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+
+# Startup event - initialize database
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup with retry logic"""
+    logger.info("Starting application...")
+    try:
+        init_database()
+    except Exception as e:
+        logger.error(f"Failed to initialize database on startup: {e}")
+        # Don't crash the app, let it continue and retry on first request
+        pass
 
 # Global exception handler
 @app.exception_handler(Exception)

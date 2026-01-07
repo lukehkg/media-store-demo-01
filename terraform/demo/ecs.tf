@@ -128,13 +128,8 @@ resource "aws_ecs_task_definition" "backend" {
         }
       ]
 
-      portMappings = [
-        {
-          containerPort = 5432
-          hostPort      = 5432
-          protocol      = "tcp"
-        }
-      ]
+      # No port mappings needed - backend connects via localhost in bridge network mode
+      # Port mappings removed to avoid conflicts when multiple tasks run on same EC2 instance
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -201,9 +196,9 @@ resource "aws_ecs_task_definition" "backend" {
       healthCheck = {
         command     = ["CMD-SHELL", "curl -f http://localhost:${var.backend_port}/health || exit 1"]
         interval    = 30
-        timeout     = 5
-        retries     = 3
-        startPeriod = 60
+        timeout     = 10
+        retries     = 5
+        startPeriod = 120  # Increased to allow database initialization with retries
       }
     }
   ])
