@@ -45,11 +45,37 @@ jobs:
       env:
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        cd backend
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        echo "Building Docker image for backend..."
+        echo "ECR Registry: $ECR_REGISTRY"
+        echo "Repository: ${{ env.ECR_REPOSITORY }}"
+        echo "Image Tag: $IMAGE_TAG"
+        
+        # Verify Dockerfile exists
+        if [ ! -f backend/Dockerfile ]; then
+          echo "❌ Error: backend/Dockerfile not found!"
+          exit 1
+        fi
+        
+        # Verify requirements.txt exists
+        if [ ! -f backend/requirements.txt ]; then
+          echo "❌ Error: backend/requirements.txt not found!"
+          exit 1
+        fi
+        
+        # Build Docker image with proper context
+        echo "Building image..."
+        docker build \
+          --file backend/Dockerfile \
+          --tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
+          --tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest \
+          backend/
+        
+        echo "Pushing image to ECR..."
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
+        
+        echo "✅ Image built and pushed successfully!"
+        echo "Image: $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG"
 
     - name: Update ECS task definition with new image
       id: task-def
@@ -64,7 +90,7 @@ jobs:
           --output json)
         
         echo "Updating image URI in task definition..."
-        NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        NEW_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG"
         echo "New image: $NEW_IMAGE"
         
         # Update container image

@@ -46,13 +46,47 @@ jobs:
       env:
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Copy shared lib to admin
+        echo "Building Docker image for frontend-admin..."
+        echo "ECR Registry: $ECR_REGISTRY"
+        echo "Repository: ${{ env.ECR_REPOSITORY }}"
+        echo "Image Tag: $IMAGE_TAG"
+        
+        # Verify Dockerfile exists
+        if [ ! -f frontend-admin/Dockerfile ]; then
+          echo "❌ Error: frontend-admin/Dockerfile not found!"
+          exit 1
+        fi
+        
+        # Verify frontend-shared exists
+        if [ ! -d frontend-shared/lib ]; then
+          echo "❌ Error: frontend-shared/lib not found!"
+          exit 1
+        fi
+        
+        # Copy shared lib to admin before building
+        echo "Copying shared lib to frontend-admin..."
         cp -r frontend-shared/lib frontend-admin/lib
-        cd frontend-admin
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        
+        # Verify package.json exists
+        if [ ! -f frontend-admin/package.json ]; then
+          echo "❌ Error: frontend-admin/package.json not found!"
+          exit 1
+        fi
+        
+        # Build Docker image with proper context
+        echo "Building image..."
+        docker build \
+          --file frontend-admin/Dockerfile \
+          --tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
+          --tag $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest \
+          frontend-admin/
+        
+        echo "Pushing image to ECR..."
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
+        
+        echo "✅ Image built and pushed successfully!"
+        echo "Image: $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG"
 
     - name: Update ECS task definition with new image
       id: task-def
@@ -67,7 +101,7 @@ jobs:
           --output json)
         
         echo "Updating image URI in task definition..."
-        NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        NEW_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG"
         echo "New image: $NEW_IMAGE"
         
         # Update container image
