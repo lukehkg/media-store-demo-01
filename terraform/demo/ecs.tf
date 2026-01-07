@@ -140,8 +140,14 @@ resource "aws_ecs_task_definition" "backend" {
         }
       ]
 
-      # No port mappings needed - backend connects via localhost in bridge network mode
-      # Port mappings removed to avoid conflicts when multiple tasks run on same EC2 instance
+      # Port mapping for PostgreSQL - needed for backend to connect in bridge mode
+      portMappings = [
+        {
+          containerPort = 5432
+          hostPort      = 0  # Dynamic port - ECS assigns random port
+          protocol      = "tcp"
+        }
+      ]
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -153,11 +159,11 @@ resource "aws_ecs_task_definition" "backend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user} -d ${var.database_name} -h localhost || exit 1"]
+        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user} || exit 1"]
         interval    = 30
-        timeout     = 15
-        retries     = 10
-        startPeriod = 180  # Increased to allow PostgreSQL to fully initialize and be stable
+        timeout     = 10
+        retries     = 3
+        startPeriod = 60  # Allow PostgreSQL to initialize before health checks start
       }
     },
     {
@@ -173,7 +179,7 @@ resource "aws_ecs_task_definition" "backend" {
       dependsOn = [
         {
           containerName = "postgres"
-          condition     = "HEALTHY"
+          condition     = "START"
         }
       ]
 
