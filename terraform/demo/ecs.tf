@@ -113,9 +113,9 @@ resource "aws_ecs_task_definition" "backend" {
       
       essential = true
 
-      # Resource limits for PostgreSQL
-      cpu    = 256  # 0.25 vCPU
-      memory = 512  # 512 MB
+      # Resource limits for PostgreSQL (increased for stability)
+      cpu    = 512  # 0.5 vCPU (increased from 256)
+      memory = 1024  # 1 GB (increased from 512 MB)
 
       environment = [
         {
