@@ -13,47 +13,98 @@ output "public_subnet_ids" {
   value       = aws_subnet.public[*].id
 }
 
-output "ec2_instance_id" {
-  description = "EC2 instance ID"
-  value       = aws_instance.app_server.id
+output "private_subnet_ids" {
+  description = "IDs of the private subnets"
+  value       = aws_subnet.private[*].id
 }
 
-output "ec2_public_ip" {
-  description = "EC2 instance public IP (Elastic IP)"
-  value       = aws_eip.app_server.public_ip
+output "ecs_cluster_id" {
+  description = "ID of the ECS cluster"
+  value       = aws_ecs_cluster.main.id
 }
 
-output "ec2_application_url" {
-  description = "Application URL for EC2 instance"
-  value       = "http://${aws_eip.app_server.public_ip}"
+output "ecs_cluster_name" {
+  description = "Name of the ECS cluster"
+  value       = aws_ecs_cluster.main.name
 }
 
-output "ec2_ssh_command" {
-  description = "SSH command to connect to EC2 instance"
-  value       = "ssh -i ~/.ssh/${var.ec2_key_name}.pem ec2-user@${aws_eip.app_server.public_ip}"
+output "alb_dns_name" {
+  description = "DNS name of the Application Load Balancer"
+  value       = aws_lb.main.dns_name
 }
 
-output "scheduler_lambda_name" {
-  description = "Name of the Lambda scheduler function"
-  value       = var.scheduler_enabled ? aws_lambda_function.ec2_scheduler[0].function_name : null
+output "alb_arn" {
+  description = "ARN of the Application Load Balancer"
+  value       = aws_lb.main.arn
 }
 
-output "scheduler_schedule" {
-  description = "Scheduler schedule information"
-  value = var.scheduler_enabled ? {
-    enabled        = true
-    start_time_utc = var.start_time_utc
-    stop_time_utc  = var.stop_time_utc
-    weekdays_only  = var.scheduler_weekdays_only
-    start_rule_arn = aws_cloudwatch_event_rule.start_ec2_instance[0].arn
-    stop_rule_arn  = aws_cloudwatch_event_rule.stop_ec2_instance[0].arn
-  } : {
-    enabled = false
+output "application_url" {
+  description = "URL of the application"
+  value       = var.certificate_arn != "" ? "https://${aws_lb.main.dns_name}" : "http://${aws_lb.main.dns_name}"
+}
+
+output "backend_service_name" {
+  description = "Name of the backend ECS service"
+  value       = aws_ecs_service.backend.name
+}
+
+output "frontend_admin_service_name" {
+  description = "Name of the frontend admin ECS service"
+  value       = aws_ecs_service.frontend_admin.name
+}
+
+output "frontend_client_service_name" {
+  description = "Name of the frontend client ECS service"
+  value       = aws_ecs_service.frontend_client.name
+}
+
+output "backend_ecr_repository_url" {
+  description = "URL of the backend ECR repository"
+  value       = aws_ecr_repository.backend.repository_url
+}
+
+output "frontend_admin_ecr_repository_url" {
+  description = "URL of the frontend admin ECR repository"
+  value       = aws_ecr_repository.frontend_admin.repository_url
+}
+
+output "frontend_client_ecr_repository_url" {
+  description = "URL of the frontend client ECR repository"
+  value       = aws_ecr_repository.frontend_client.repository_url
+}
+
+output "ecr_login_command" {
+  description = "AWS CLI command to login to ECR"
+  value       = "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+}
+
+output "spot_capacity_provider_info" {
+  description = "Information about Spot capacity provider configuration"
+  value = {
+    spot_weight         = var.spot_weight
+    spot_base_capacity  = var.spot_base_capacity
+    fargate_weight      = var.fargate_weight
+    fargate_base_capacity = var.fargate_base_capacity
+    note                = "Tasks will prefer Fargate Spot (70% savings) with Fargate as fallback"
   }
 }
 
-output "monthly_cost_estimate" {
-  description = "Estimated monthly cost (with scheduler)"
-  value       = "~$14/month (EC2: $4.50, EBS: $3.00, Other: $6.50)"
+output "github_secrets_guide" {
+  description = "GitHub Secrets to configure for CI/CD"
+  value = <<-EOT
+    Required GitHub Secrets:
+    - AWS_ACCESS_KEY_ID: AWS IAM user access key
+    - AWS_SECRET_ACCESS_KEY: AWS IAM user secret key
+    - AWS_ACCOUNT_ID: ${var.aws_account_id}
+    
+    Optional GitHub Variables (can be set as repository variables):
+    - AWS_REGION: ${var.aws_region}
+    - ECS_CLUSTER: ${aws_ecs_cluster.main.name}
+    - ECS_SERVICE_BACKEND: ${aws_ecs_service.backend.name}
+    - ECS_SERVICE_FRONTEND_ADMIN: ${aws_ecs_service.frontend_admin.name}
+    - ECS_SERVICE_FRONTEND_CLIENT: ${aws_ecs_service.frontend_client.name}
+    - ECR_REPOSITORY_BACKEND: ${aws_ecr_repository.backend.name}
+    - ECR_REPOSITORY_FRONTEND_ADMIN: ${aws_ecr_repository.frontend_admin.name}
+    - ECR_REPOSITORY_FRONTEND_CLIENT: ${aws_ecr_repository.frontend_client.name}
+  EOT
 }
-
