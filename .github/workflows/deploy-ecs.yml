@@ -24,9 +24,9 @@ env:
   ECS_SERVICE_BACKEND: demo-backend-demo
   ECS_SERVICE_FRONTEND_ADMIN: demo-frontend-admin-demo
   ECS_SERVICE_FRONTEND_CLIENT: demo-frontend-client-demo
-  ECR_REPOSITORY_BACKEND: demo-backend
-  ECR_REPOSITORY_FRONTEND_ADMIN: demo-frontend-admin
-  ECR_REPOSITORY_FRONTEND_CLIENT: demo-frontend-client
+  ECR_REPOSITORY_BACKEND: dev02-backend
+  ECR_REPOSITORY_FRONTEND_ADMIN: dev02-frontend-admin
+  ECR_REPOSITORY_FRONTEND_CLIENT: dev02-frontend-client
 
 jobs:
   build-and-push-backend:

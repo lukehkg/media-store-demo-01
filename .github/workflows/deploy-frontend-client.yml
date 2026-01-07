@@ -17,7 +17,7 @@ on:
 
 env:
   AWS_REGION: eu-west-1
-  ECR_REPOSITORY: demo-frontend-client
+  ECR_REPOSITORY: dev02-frontend-client
   ECS_SERVICE: demo-frontend-client-demo
   ECS_CLUSTER: demo-media01-cluster
 

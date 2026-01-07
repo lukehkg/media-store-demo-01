@@ -16,7 +16,7 @@ on:
 
 env:
   AWS_REGION: eu-west-1
-  ECR_REPOSITORY: demo-backend
+  ECR_REPOSITORY: dev02-backend
   ECS_SERVICE: demo-backend-demo
   ECS_CLUSTER: demo-media01-cluster
 
