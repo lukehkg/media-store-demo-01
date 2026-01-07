@@ -1,73 +1,70 @@
-# Documentation Index
+# Documentation
 
-This folder contains all project documentation organized by category.
+This directory contains project documentation, deployment guides, and reference materials.
 
-## 📁 Folder Structure
+## 📁 Directory Structure
 
 ```
 docs/
-├── README.md (this file)
-├── recent/           # Recent documentation (moved from project root)
-│   ├── README.md
-│   ├── ARCHITECTURE_SEPARATION.md
-│   ├── BUILD_SUMMARY.md
-│   ├── DOCKER_RESTART_STATUS.md
-│   ├── FINAL_STATUS.md
-│   ├── FINAL_VERIFICATION.md
-│   ├── FRONTEND_SEPARATION_SUMMARY.md
-│   ├── SEPARATION_IMPLEMENTATION.md
-│   ├── SEPARATION_SETUP.md
-│   ├── STORAGE_REORGANIZATION.md
-│   ├── STRUCTURE_VERIFICATION.md
-│   └── VERIFICATION_REPORT.md
-└── archive/          # Historical documentation and logs
-    ├── INDEX.md      # Archive index (see all files)
-    ├── BUILD_FIX.md
-    ├── CLIENT_FIXES.md
-    ├── FIXES_APPLIED.md
-    ├── FIXES_SUMMARY.md
-    └── ... (40+ historical docs)
+├── README.md                    # This file
+├── archive/                     # Historical documentation
+├── recent/                      # Recent updates and changes
+├── aws-CICD-progress-01.jpg     # CI/CD pipeline screenshot 1
+├── aws-CICD-progress-02.jpg     # CI/CD pipeline screenshot 2
+├── cap-Terraform-deploy-01.jpg # Terraform deployment screenshot 1
+└── cap-Terraform-deploy-02.jpg # Terraform deployment screenshot 2
 ```
 
-## 📚 Documentation Organization
+## 🚀 AWS Deployment Documentation
 
-### Recent (`docs/recent/`)
-**Recent documentation files moved from project root.**
+### Infrastructure Deployment
 
-Includes:
-- Frontend separation architecture and implementation
-- Storage dashboard reorganization
-- Docker build and restart status
+The project uses Terraform for Infrastructure as Code (IaC) to deploy to AWS.
+
+**Terraform Deployment Screenshots:**
+
+![Terraform Deployment 1](cap-Terraform-deploy-01.jpg)
+*Terraform deployment progress - Infrastructure provisioning*
+
+![Terraform Deployment 2](cap-Terraform-deploy-02.jpg)
+*Terraform deployment completion - Resources created successfully*
+
+### CI/CD Pipeline
+
+Automated deployment using GitHub Actions with AWS ECS.
+
+**CI/CD Pipeline Screenshots:**
+
+![CI/CD Progress 1](aws-CICD-progress-01.jpg)
+*GitHub Actions CI/CD pipeline - Build and push stages*
+
+![CI/CD Progress 2](aws-CICD-progress-02.jpg)
+*GitHub Actions CI/CD pipeline - Deployment stages*
+
+## 📚 Documentation Sections
+
+### Recent Updates (`recent/`)
+- Latest architecture changes
+- Deployment summaries
+- Implementation guides
 - Verification reports
-- Structure documentation
 
-See `recent/README.md` for details.
+### Archive (`archive/`)
+- Historical documentation
+- Previous implementation details
+- Legacy guides and fixes
 
-### Archive (`docs/archive/`)
-**All historical documentation, fix logs, and troubleshooting notes are stored here.**
+## 🔗 Related Documentation
 
-Categories include:
-- Build & Setup fixes
-- Login issue resolutions
-- B2 configuration guides
-- Admin console updates
-- Testing documentation
-- Architecture diagrams
-- Troubleshooting guides
+- **Terraform Configuration**: See [../terraform/README.md](../terraform/README.md)
+- **Demo Environment**: See [../terraform/demo/README.md](../terraform/demo/README.md)
+- **Production Environment**: See [../terraform/production/README.md](../terraform/production/README.md)
+- **Main Project README**: See [../README.md](../README.md)
 
-See `archive/INDEX.md` for a complete list.
+## 📝 Contributing
 
-## 🔍 Quick Reference
-
-- **Recent Docs**: `recent/README.md` - Recent documentation index
-- **Archive Index**: `archive/INDEX.md` - Complete list of all archived docs
-- **Setup**: See `archive/QUICKSTART.md` or `archive/SETUP_ADMIN.md`
-- **Architecture**: See `recent/ARCHITECTURE_SEPARATION.md` or `archive/ARCHITECTURE.md`
-- **Storage Dashboard**: See `recent/STORAGE_REORGANIZATION.md`
-- **Troubleshooting**: See `archive/TROUBLESHOOTING.md` or other files in `archive/`
-
-## 📝 Note
-
-- **Recent documentation**: Moved from project root to `docs/recent/` for better organization
-- **Historical docs**: Preserved in `archive/` for long-term reference
-- **Root README.md**: Remains in project root for quick reference
+When adding new documentation:
+1. Place recent updates in `recent/`
+2. Archive old documentation in `archive/`
+3. Update this README if adding new sections
+4. Include screenshots when documenting deployments

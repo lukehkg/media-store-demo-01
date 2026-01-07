@@ -147,6 +147,51 @@ See `docs/` folder for detailed documentation:
 - Setup guides
 - Troubleshooting
 
+## 🚀 AWS Deployment & CI/CD
+
+This project includes automated CI/CD deployment to AWS ECS using Terraform and GitHub Actions.
+
+### Terraform Infrastructure Deployment
+
+The infrastructure is managed using Terraform and deploys:
+- ECS Cluster with EC2 Spot instances
+- ECR Repositories for Docker images
+- Application Load Balancer
+- Auto-scaling configuration
+
+**Terraform Deployment Screenshots:**
+
+![Terraform Deployment 1](docs/cap-Terraform-deploy-01.jpg)
+*Terraform deployment progress - Infrastructure provisioning*
+
+![Terraform Deployment 2](docs/cap-Terraform-deploy-02.jpg)
+*Terraform deployment completion - Resources created successfully*
+
+### GitHub Actions CI/CD Pipeline
+
+Automated CI/CD pipeline using GitHub Actions:
+- Builds Docker images
+- Pushes to AWS ECR
+- Updates ECS task definitions
+- Deploys to ECS services
+
+**CI/CD Pipeline Screenshots:**
+
+![CI/CD Progress 1](docs/aws-CICD-progress-01.jpg)
+*GitHub Actions CI/CD pipeline - Build and push stages*
+
+![CI/CD Progress 2](docs/aws-CICD-progress-02.jpg)
+*GitHub Actions CI/CD pipeline - Deployment stages*
+
+### Deployment Configuration
+
+- **Region**: eu-west-1 (London)
+- **Environment**: DEMO (GitHub Environment)
+- **Cost Optimized**: ~$20-30/month with Spot instances
+- **Auto-scaling**: Enabled for EC2 instances and ECS services
+
+For detailed deployment instructions, see [terraform/demo/README.md](terraform/demo/README.md)
+
 ## 🐛 Troubleshooting
 
 ### Login Issues

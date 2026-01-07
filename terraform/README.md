@@ -1,145 +1,84 @@
-# Terraform Deployment Configurations
+# Terraform Infrastructure as Code
 
-This directory contains **TWO completely separate and independent Terraform configurations**:
+This directory contains Terraform configurations for deploying the Media Store application to AWS.
 
 ## 📁 Directory Structure
 
 ```
 terraform/
-│
-├── 📁 production/          ← Production: ECS Fargate (24/7, no scheduler)
-│   ├── versions.tf
-│   ├── variables.tf
-│   ├── vpc.tf              (VPC with public/private subnets, NAT Gateway)
-│   ├── security.tf         (Security groups for ALB and ECS)
-│   ├── alb.tf              (Application Load Balancer)
-│   ├── ecr.tf              (ECR repositories)
-│   ├── ecs.tf              (ECS cluster, task definitions, services)
-│   ├── autoscaling.tf      (Auto-scaling policies)
-│   ├── outputs.tf
-│   ├── terraform.tfvars.example
-│   └── README.md
-│
-└── 📁 demo/                ← Demo: EC2 t3.small (with scheduler)
-    ├── versions.tf
-    ├── variables.tf
-    ├── vpc.tf              (VPC with public subnet only, no NAT)
-    ├── ec2.tf              (EC2 instance, Elastic IP, IAM)
-    ├── lambda.tf           (Lambda scheduler for start/stop)
-    ├── outputs.tf
-    ├── terraform.tfvars.example
-    ├── README.md
-    ├── ec2/
-    │   └── user-data.sh    (EC2 bootstrap script)
-    └── lambda/
-        └── ec2_scheduler.py (Lambda function code)
+├── demo/          # Demo/POC environment (cost-optimized with EC2 Spot)
+├── production/    # Production environment (ECS Fargate)
+└── README.md      # This file
 ```
 
-## 🚀 Production Deployment (`production/`)
+## 🎯 Environments
 
-**Purpose:** Production environment with high availability
+### Demo Environment (`terraform/demo/`)
+- **Purpose**: Cost-optimized demo/POC environment
+- **Architecture**: ECS with EC2 Spot instances (t3.small)
+- **Cost**: ~$20-30/month
+- **Features**: Auto-scaling, CI/CD ready, public subnets only
+- **Documentation**: [demo/README.md](demo/README.md)
 
-**Architecture:**
-- ✅ ECS Fargate Cluster
-- ✅ Application Load Balancer (ALB)
-- ✅ NAT Gateway (single, cost-optimized)
-- ✅ Auto-scaling (1-5 tasks)
-- ✅ Multi-AZ deployment
-- ❌ **No Lambda scheduler** (runs 24/7)
+### Production Environment (`terraform/production/`)
+- **Purpose**: Production-ready deployment
+- **Architecture**: ECS Fargate with private subnets
+- **Features**: High availability, NAT Gateway, ALB
+- **Documentation**: [production/README.md](production/README.md)
 
-**Monthly Cost:** ~$95/month
+## 🚀 Quick Start
 
-**Quick Start:**
-```bash
-cd terraform/production
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your AWS Account ID
-terraform init
-terraform plan
-terraform apply
-```
+1. **Choose your environment** (demo or production)
+2. **Navigate to the environment directory**:
+   ```bash
+   cd terraform/demo  # or terraform/production
+   ```
+3. **Follow the README.md** in that directory for specific instructions
 
-## 💰 Demo Deployment (`demo/`)
+## 📸 Deployment Screenshots
 
-**Purpose:** Demo/POC environment, maximum cost savings
+### Terraform Infrastructure Deployment
 
-**Architecture:**
-- ✅ EC2 t3.small instance
-- ✅ Elastic IP
-- ✅ Lambda scheduler (8 AM - 6 PM GMT+1, Mon-Fri)
-- ✅ VPC with public subnet only
-- ❌ **No NAT Gateway** (saves $33/month)
-- ❌ **No ALB** (saves $19/month)
+![Terraform Deployment 1](../docs/cap-Terraform-deploy-01.jpg)
+*Terraform deployment progress - Infrastructure provisioning*
 
-**Monthly Cost:** ~$14/month (80% savings vs production)
+![Terraform Deployment 2](../docs/cap-Terraform-deploy-02.jpg)
+*Terraform deployment completion - Resources created successfully*
 
-**Quick Start:**
-```bash
-cd terraform/demo
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars - REQUIRED: Set ec2_key_name
-terraform init
-terraform plan
-terraform apply
-```
+### GitHub Actions CI/CD Pipeline
 
-## 📊 Comparison
+![CI/CD Progress 1](../docs/aws-CICD-progress-01.jpg)
+*GitHub Actions CI/CD pipeline - Build and push stages*
 
-| Feature | Production | Demo |
-|---------|-----------|------|
-| **Compute** | ECS Fargate | EC2 t3.small |
-| **Scheduler** | ❌ None (24/7) | ✅ Lambda (business hours) |
-| **NAT Gateway** | ✅ Yes ($33/month) | ❌ No ($0) |
-| **ALB** | ✅ Yes ($19/month) | ❌ No ($0) |
-| **Cost** | $95/month | $14/month |
-| **High Availability** | ✅ Yes | ❌ Single instance |
-| **Auto-scaling** | ✅ Yes | ❌ Manual only |
+![CI/CD Progress 2](../docs/aws-CICD-progress-02.jpg)
+*GitHub Actions CI/CD pipeline - Deployment stages*
 
-## 🎯 Which One to Use?
+## 🔧 Prerequisites
 
-### Use Production (`production/`) if:
-- ✅ Production environment
-- ✅ High availability required
-- ✅ Auto-scaling needed
-- ✅ Multi-AZ deployment
-- ✅ Service isolation required
-- ✅ 24/7 operation
+- **Terraform** >= 1.0
+- **AWS CLI** configured
+- **AWS Account** with appropriate permissions
+- **EC2 Key Pair** (for demo environment)
 
-### Use Demo (`demo/`) if:
-- ✅ Demo/POC environment
-- ✅ Budget is primary concern
-- ✅ Low to moderate traffic
-- ✅ Can accept single instance
-- ✅ Business hours only (with scheduler)
+## 📝 Configuration
 
-## 📚 Documentation
+Each environment has its own:
+- `variables.tf` - Input variables
+- `terraform.tfvars.example` - Example configuration
+- `README.md` - Environment-specific documentation
 
-- **Complete Documentation:** See `DOCUMENTATION.md` (comprehensive guide)
-- **Production:** See `production/README.md`
-- **Demo:** See `demo/README.md`
+## 🔐 Security
 
-## ⚠️ Important Notes
+- All sensitive values should be stored in:
+  - GitHub Environment secrets (for CI/CD)
+  - `terraform.tfvars` (local, not committed to git)
+- Never commit:
+  - AWS credentials
+  - Private keys
+  - Sensitive configuration values
 
-- **Each folder is completely independent** - don't mix files
-- **Old files in root `terraform/`** are documentation/reference only
-- **Use ONLY files inside `production/` or `demo/` folders**
-- **Each configuration is self-contained** and ready to deploy
+## 📚 Additional Resources
 
-## 🔧 Common Commands
-
-**View outputs:**
-```bash
-terraform output
-```
-
-**Destroy infrastructure:**
-```bash
-terraform destroy
-```
-
-**Update configuration:**
-```bash
-# Edit terraform.tfvars
-terraform plan
-terraform apply
-```
+- [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)
+- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)

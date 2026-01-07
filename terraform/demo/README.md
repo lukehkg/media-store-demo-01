@@ -135,16 +135,38 @@ spot_max_price_per_hour = "0.01"  # Maximum $0.01/hour
 
 See `.github/workflows/deploy-ecs.yml` for GitHub Actions CI/CD pipeline.
 
-Configure GitHub Secrets:
+### GitHub Environment Configuration
+
+Configure the **DEMO** environment in GitHub with the following secrets:
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_ACCOUNT_ID`
+
+### CI/CD Pipeline Flow
 
 The workflow will:
 1. Build Docker images
 2. Push to ECR
 3. Update ECS task definitions
 4. Deploy to ECS services
+
+### Deployment Screenshots
+
+**GitHub Actions CI/CD Pipeline:**
+
+![CI/CD Progress 1](../../docs/aws-CICD-progress-01.jpg)
+*GitHub Actions CI/CD pipeline - Build and push stages*
+
+![CI/CD Progress 2](../../docs/aws-CICD-progress-02.jpg)
+*GitHub Actions CI/CD pipeline - Deployment stages*
+
+**Terraform Infrastructure Deployment:**
+
+![Terraform Deployment 1](../../docs/cap-Terraform-deploy-01.jpg)
+*Terraform deployment progress - Infrastructure provisioning*
+
+![Terraform Deployment 2](../../docs/cap-Terraform-deploy-02.jpg)
+*Terraform deployment completion - Resources created successfully*
 
 ## Outputs
 
