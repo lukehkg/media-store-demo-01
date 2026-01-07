@@ -172,7 +172,7 @@ resource "aws_ecs_task_definition" "backend" {
       portMappings = [
         {
           containerPort = var.backend_port
-          hostPort      = var.backend_port
+          hostPort      = 0  # Dynamic port mapping - ECS assigns random port to avoid conflicts
           protocol      = "tcp"
         }
       ]
@@ -235,7 +235,7 @@ resource "aws_ecs_task_definition" "frontend_admin" {
       portMappings = [
         {
           containerPort = var.frontend_port
-          hostPort      = var.frontend_port
+          hostPort      = 0  # Dynamic port mapping - ECS assigns random port to avoid conflicts
           protocol      = "tcp"
         }
       ]
@@ -294,7 +294,7 @@ resource "aws_ecs_task_definition" "frontend_client" {
       portMappings = [
         {
           containerPort = var.frontend_port
-          hostPort      = var.frontend_port + 1
+          hostPort      = 0  # Dynamic port mapping - ECS assigns random port to avoid conflicts
           protocol      = "tcp"
         }
       ]

@@ -22,7 +22,10 @@ resource "aws_lb_target_group" "backend" {
   port        = var.backend_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
-  target_type = "instance"
+  target_type = "instance"  # For bridge network mode with EC2
+  
+  # Note: With dynamic port mapping (hostPort=0), ECS automatically registers tasks
+  # Multiple tasks can run on same EC2 instance without port conflicts
 
   health_check {
     enabled             = true
@@ -73,10 +76,12 @@ resource "aws_lb_target_group" "frontend_admin" {
 # Target Group for Frontend Client
 resource "aws_lb_target_group" "frontend_client" {
   name        = "${var.project_name}-frontend-client-tg-${var.environment}"
-  port        = var.frontend_port + 1
+  port        = var.frontend_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
-  target_type = "instance"
+  target_type = "instance"  # For bridge network mode with EC2
+  
+  # Note: With dynamic port mapping (hostPort=0), ECS automatically registers tasks
 
   health_check {
     enabled             = true
