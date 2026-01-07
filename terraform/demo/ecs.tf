@@ -133,6 +133,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "POSTGRES_HOST_AUTH_METHOD"
           value = "scram-sha-256"
+        },
+        {
+          name  = "POSTGRES_INITDB_ARGS"
+          value = "--auth-host=scram-sha-256"
         }
       ]
 
