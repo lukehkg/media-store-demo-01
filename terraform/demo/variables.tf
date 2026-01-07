@@ -34,17 +34,8 @@ variable "public_subnet_cidrs" {
   default     = ["10.0.1.0/28", "10.0.2.0/28"]
 }
 
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks for private subnets"
-  type        = list(string)
-  default     = ["10.0.10.0/28", "10.0.20.0/28"]
-}
-
-variable "enable_nat_gateway" {
-  description = "Enable NAT Gateway for private subnets"
-  type        = bool
-  default     = true
-}
+# Note: Using public subnets only - no NAT Gateway needed
+# Private subnets removed for cost savings (~$33/month)
 
 variable "ecs_cluster_name" {
   description = "Name of the ECS cluster"

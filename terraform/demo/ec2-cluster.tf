@@ -102,10 +102,10 @@ resource "aws_launch_template" "ecs_instances" {
   }
 }
 
-# Auto Scaling Group for ECS EC2 Instances (with Spot instances)
+# Auto Scaling Group for ECS EC2 Instances (with Spot instances in public subnet)
 resource "aws_autoscaling_group" "ecs_instances" {
   name                = "${var.project_name}-ecs-asg-${var.environment}"
-  vpc_zone_identifier = aws_subnet.private[*].id
+  vpc_zone_identifier = aws_subnet.public[*].id
   min_size            = var.min_capacity
   max_size            = var.max_capacity
   desired_capacity    = var.desired_capacity
@@ -151,7 +151,6 @@ resource "aws_autoscaling_group" "ecs_instances" {
     propagate_at_launch = true
   }
 
-  depends_on = [aws_nat_gateway.main]
 }
 
 # Auto Scaling Policy - Scale based on ECS cluster CPU reservation

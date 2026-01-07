@@ -4,26 +4,25 @@ This Terraform configuration deploys a cost-optimized demo/POC environment using
 
 ## Architecture
 
-- **ECS Cluster** with EC2 Spot instances (t3.small)
+- **ECS Cluster** with EC2 Spot instances (t3.small) in public subnets
 - **3 ECS Services**: Backend, Frontend Admin, Frontend Client
 - **ECR Repositories** (3) for Docker images with lifecycle policies
 - **Application Load Balancer** (ALB) for load balancing and routing
-- **NAT Gateway** (single, cost-optimized) for private subnet internet access
+- **No NAT Gateway** - EC2 instances in public subnets (saves ~$33/month)
 - **Auto-scaling** for both EC2 instances and ECS services
 - **CloudWatch Logs** with 3-day retention
-- **VPC** with public and private subnets across 2 AZs
+- **VPC** with public subnets only across 2 AZs
 
 ## Cost Savings
 
-**Monthly Cost Estimate: ~$25-35**
+**Monthly Cost Estimate: ~$20-30**
 - EC2 Spot Instances (t3.small): $2-4 (up to 90% savings vs on-demand)
-- NAT Gateway: $33.30
 - Application Load Balancer: $19.34
 - EBS Storage: $3.00 (30 GB per instance)
 - ECR Storage: $1.50
 - CloudWatch Logs: $0.50
 - Data Transfer: $4.51
-- **Total: ~$25-35/month**
+- **Total: ~$20-30/month** (saves ~$33/month without NAT Gateway)
 
 **Savings vs On-Demand EC2:** Up to 90% reduction  
 **Savings vs ECS Fargate:** ~60% reduction  

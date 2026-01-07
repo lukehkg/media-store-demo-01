@@ -13,10 +13,7 @@ output "public_subnet_ids" {
   value       = aws_subnet.public[*].id
 }
 
-output "private_subnet_ids" {
-  description = "IDs of the private subnets"
-  value       = aws_subnet.private[*].id
-}
+# Note: Using public subnets only - no private subnets
 
 output "ecs_cluster_id" {
   description = "ID of the ECS cluster"

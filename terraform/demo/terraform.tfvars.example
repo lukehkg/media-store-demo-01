@@ -8,12 +8,11 @@ environment  = "demo"
 # AWS Account ID (required for ECR)
 aws_account_id = "<your-12-digit-aws-account-id>"
 
-# VPC Configuration (public and private subnets for ECS)
+# VPC Configuration (public subnets only - no NAT Gateway for cost savings)
 vpc_cidr            = "10.0.0.0/16"
 availability_zones   = ["eu-west-1a", "eu-west-1b"]
 public_subnet_cidrs  = ["10.0.1.0/28", "10.0.2.0/28"]
-private_subnet_cidrs = ["10.0.10.0/28", "10.0.20.0/28"]
-enable_nat_gateway  = true
+# Note: Using public subnets only - saves ~$33/month on NAT Gateway
 
 # ECS Configuration
 ecs_cluster_name = "demo-media01-cluster"
