@@ -159,11 +159,11 @@ resource "aws_ecs_task_definition" "backend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user} || exit 1"]
+        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user} -h localhost -p 5432 -d ${var.database_name} || exit 1"]
         interval    = 30
         timeout     = 10
         retries     = 3
-        startPeriod = 60  # Allow PostgreSQL to initialize before health checks start
+        startPeriod = 90  # Allow PostgreSQL to initialize before health checks start
       }
     },
     {
