@@ -101,8 +101,8 @@ resource "aws_ecs_task_definition" "backend" {
   family                   = "${var.project_name}-backend-${var.environment}"
   network_mode             = "bridge"
   requires_compatibilities = ["EC2"]
-  cpu                      = var.backend_cpu
-  memory                   = var.backend_memory
+  cpu                      = var.backend_cpu + 256  # Add CPU for PostgreSQL container
+  memory                   = var.backend_memory + 512  # Add memory for PostgreSQL container
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
   task_role_arn           = aws_iam_role.ecs_task.arn
 
