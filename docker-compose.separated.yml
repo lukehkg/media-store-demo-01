@@ -1,21 +1,27 @@
 services:
-  postgres:
-    image: postgres:15-alpine
+  mysql:
+    image: mysql:8.0
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: photoportal
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: photoportal
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "user", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://user:password@postgres:5432/photoportal
+      DATABASE_URL: mysql+pymysql://user:password@mysql:3306/photoportal?charset=utf8mb4
       SECRET_KEY: dev-secret-key-change-in-production
       B2_APPLICATION_KEY_ID: ${B2_APPLICATION_KEY_ID:-}
       B2_APPLICATION_KEY: ${B2_APPLICATION_KEY:-}
@@ -25,7 +31,8 @@ services:
       CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
       BASE_DOMAIN: ${BASE_DOMAIN:-localhost}
     depends_on:
-      - postgres
+      mysql:
+        condition: service_healthy
     volumes:
       - ./backend:/app
 
@@ -66,4 +73,4 @@ services:
           memory: 1G
 
 volumes:
-  postgres_data:
+  mysql_data:

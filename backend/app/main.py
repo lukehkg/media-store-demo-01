@@ -17,28 +17,35 @@ logger = logging.getLogger(__name__)
 # Retry database connection with exponential backoff
 def init_database(max_retries=10, retry_delay=5):
     """Initialize database tables with retry logic for ECS deployment"""
+    from urllib.parse import urlparse
     import socket
+    from app.config import settings
+    
+    # Extract hostname from DATABASE_URL
+    db_url = settings.DATABASE_URL
+    parsed = urlparse(db_url)
+    db_host = parsed.hostname or 'localhost'
+    db_port = parsed.port or (3306 if 'mysql' in db_url.lower() else 5432)
     
     for attempt in range(max_retries):
         try:
-            # First, check if MySQL port is accessible
-            logger.info(f"Attempting to connect to database (attempt {attempt + 1}/{max_retries})...")
+            logger.info(f"Attempting to connect to database at {db_host}:{db_port} (attempt {attempt + 1}/{max_retries})...")
             
-            # Check if port 3306 is open
+            # Check if database port is accessible (skip check in Docker Compose where hostname might not resolve)
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(2)
-                result = sock.connect_ex(('localhost', 3306))
+                result = sock.connect_ex((db_host, db_port))
                 sock.close()
-                if result != 0:
-                    logger.warning(f"Port 3306 on localhost is not accessible (result: {result})")
+                if result != 0 and db_host == 'localhost':
+                    logger.warning(f"Port {db_port} on {db_host} is not accessible (result: {result})")
                     if attempt < max_retries - 1:
                         wait_time = retry_delay * (2 ** attempt)
                         logger.info(f"Waiting {wait_time} seconds before retry...")
                         time.sleep(wait_time)
                         continue
             except Exception as e:
-                logger.warning(f"Socket check failed: {e}")
+                logger.debug(f"Socket check skipped: {e}")
             
             # Try database connection
             Base.metadata.create_all(bind=engine)
