@@ -87,8 +87,8 @@ jobs:
           NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "New image: $NEW_IMAGE"
           
-          # Update container image
-          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions[0].image = $IMAGE')
+          # Update backend container image (find by name "backend" since MySQL is at index 0)
+          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions |= map(if .name == "backend" then .image = $IMAGE else . end)')
           
           # Remove fields that can't be updated
           UPDATED_TASK_DEF=$(echo "$UPDATED_TASK_DEF" | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
@@ -183,8 +183,8 @@ jobs:
           NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "New image: $NEW_IMAGE"
           
-          # Update container image
-          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions[0].image = $IMAGE')
+          # Update backend container image (find by name "backend" since MySQL is at index 0)
+          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions |= map(if .name == "backend" then .image = $IMAGE else . end)')
           
           # Remove fields that can't be updated
           UPDATED_TASK_DEF=$(echo "$UPDATED_TASK_DEF" | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
@@ -279,8 +279,8 @@ jobs:
           NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "New image: $NEW_IMAGE"
           
-          # Update container image
-          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions[0].image = $IMAGE')
+          # Update backend container image (find by name "backend" since MySQL is at index 0)
+          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$NEW_IMAGE" '.containerDefinitions |= map(if .name == "backend" then .image = $IMAGE else . end)')
           
           # Remove fields that can't be updated
           UPDATED_TASK_DEF=$(echo "$UPDATED_TASK_DEF" | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
