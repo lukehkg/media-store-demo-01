@@ -30,30 +30,9 @@ def init_demo_data():
         
         logger.info("Initializing demo data...")
         
-        # Read and execute SQL file
-        sql_file = Path(__file__).parent.parent / "init-db.sql"
-        if sql_file.exists():
-            logger.info(f"Reading SQL file: {sql_file}")
-            with open(sql_file, 'r', encoding='utf-8') as f:
-                sql_content = f.read()
-            
-            # Split SQL file into individual statements
-            statements = [s.strip() for s in sql_content.split(';') if s.strip() and not s.strip().startswith('--')]
-            
-            # Execute each statement
-            for statement in statements:
-                if statement:
-                    try:
-                        db.execute(text(statement))
-                        db.commit()
-                    except Exception as e:
-                        logger.warning(f"Error executing statement: {e}")
-                        db.rollback()
-            
-            logger.info("✅ Demo data initialized successfully!")
-        else:
-            logger.warning(f"SQL file not found: {sql_file}. Creating demo data programmatically...")
-            create_demo_data_programmatically(db)
+        # Use programmatic method for more reliable data insertion
+        logger.info("Creating demo data programmatically...")
+        create_demo_data_programmatically(db)
             
     except Exception as e:
         logger.error(f"Error initializing demo data: {e}")
