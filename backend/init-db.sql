@@ -1,16 +1,15 @@
 -- MySQL initialization script with demo data
--- This file is automatically executed when MySQL container starts for the first time
--- Files in /docker-entrypoint-initdb.d/ are executed in alphabetical order
+-- This file is read by the backend application and executed to populate demo data
+-- The backend application checks if tables are empty and runs this SQL if needed
 
--- Set timezone
+-- Set timezone (if needed)
 SET time_zone = '+00:00';
 
--- Create demo tenants
-INSERT INTO tenants (id, subdomain, name, email, storage_limit_mb, storage_used_bytes, created_at, expires_at, is_active) VALUES
+-- Create demo tenants (only if they don't exist)
+INSERT IGNORE INTO tenants (id, subdomain, name, email, storage_limit_mb, storage_used_bytes, created_at, expires_at, is_active) VALUES
 (1, 'demo', 'Demo Tenant', 'demo@example.com', 1000, 0, NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY), TRUE),
 (2, 'acme', 'Acme Corporation', 'admin@acme.com', 2000, 52428800, NOW(), DATE_ADD(NOW(), INTERVAL 180 DAY), TRUE),
-(3, 'testco', 'Test Company', 'contact@testco.com', 500, 10485760, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), TRUE)
-ON DUPLICATE KEY UPDATE subdomain=subdomain;
+(3, 'testco', 'Test Company', 'contact@testco.com', 500, 10485760, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), TRUE);
 
 -- Create demo users
 -- Password for all demo users: "demo123" (hashed with bcrypt)

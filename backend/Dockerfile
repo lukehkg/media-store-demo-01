@@ -17,8 +17,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY scripts/ ./scripts/
 COPY init-db.sql ./init-db.sql
-COPY scripts/ ./scripts/
-COPY init-db.sql ./init-db.sql
 
 # Expose port
 EXPOSE 8000
