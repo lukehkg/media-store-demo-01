@@ -96,7 +96,7 @@ resource "aws_iam_role" "ecs_task" {
   }
 }
 
-# ECS Task Definition - Backend (with PostgreSQL container)
+# ECS Task Definition - Backend (with MySQL container)
 resource "aws_ecs_task_definition" "backend" {
   family                   = "${var.project_name}-backend-${var.environment}"
   network_mode             = "bridge"
@@ -108,42 +108,38 @@ resource "aws_ecs_task_definition" "backend" {
 
   container_definitions = jsonencode([
     {
-      name  = "postgres"
-      image = "postgres:15-alpine"
+      name  = "mysql"
+      image = "mysql:8.0"
       
       essential = true
 
-      # Resource limits for PostgreSQL (increased for stability)
-      cpu    = 512  # 0.5 vCPU (increased from 256)
-      memory = 1024  # 1 GB (increased from 512 MB)
+      # Resource limits for MySQL
+      cpu    = 512  # 0.5 vCPU
+      memory = 1024  # 1 GB
 
       environment = [
         {
-          name  = "POSTGRES_USER"
-          value = var.database_user
-        },
-        {
-          name  = "POSTGRES_PASSWORD"
+          name  = "MYSQL_ROOT_PASSWORD"
           value = var.database_password
         },
         {
-          name  = "POSTGRES_DB"
+          name  = "MYSQL_DATABASE"
           value = var.database_name
         },
         {
-          name  = "POSTGRES_HOST_AUTH_METHOD"
-          value = "scram-sha-256"
+          name  = "MYSQL_USER"
+          value = var.database_user
         },
         {
-          name  = "POSTGRES_INITDB_ARGS"
-          value = "--auth-host=scram-sha-256"
+          name  = "MYSQL_PASSWORD"
+          value = var.database_password
         }
       ]
 
-      # Port mapping for PostgreSQL - needed for backend to connect in bridge mode
+      # Port mapping for MySQL - needed for backend to connect in bridge mode
       portMappings = [
         {
-          containerPort = 5432
+          containerPort = 3306
           hostPort      = 0  # Dynamic port - ECS assigns random port
           protocol      = "tcp"
         }
@@ -154,16 +150,16 @@ resource "aws_ecs_task_definition" "backend" {
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.backend.name
           "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "postgres"
+          "awslogs-stream-prefix" = "mysql"
         }
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "pg_isready -U ${var.database_user} -h localhost -p 5432 -d ${var.database_name} || exit 1"]
+        command     = ["CMD-SHELL", "mysqladmin ping -h localhost -u ${var.database_user} -p'${replace(replace(var.database_password, "'", "''"), "$", "$$")}' || exit 1"]
         interval    = 30
         timeout     = 10
         retries     = 3
-        startPeriod = 90  # Allow PostgreSQL to initialize before health checks start
+        startPeriod = 90  # Allow MySQL to initialize before health checks start
       }
     },
     {
@@ -178,7 +174,7 @@ resource "aws_ecs_task_definition" "backend" {
 
       dependsOn = [
         {
-          containerName = "postgres"
+          containerName = "mysql"
           condition     = "START"
         }
       ]
@@ -198,7 +194,7 @@ resource "aws_ecs_task_definition" "backend" {
         },
         {
           name  = "DATABASE_URL"
-          value = "postgresql://${var.database_user}:${replace(replace(replace(var.database_password, "@", "%40"), ":", "%3A"), "/", "%2F")}@localhost:5432/${var.database_name}"
+          value = "mysql+pymysql://${var.database_user}:${replace(replace(replace(var.database_password, "@", "%40"), ":", "%3A"), "/", "%2F")}@localhost:3306/${var.database_name}?charset=utf8mb4"
         },
         {
           name  = "SECRET_KEY"

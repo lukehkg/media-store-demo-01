@@ -142,7 +142,7 @@ variable "min_capacity" {
 variable "max_capacity" {
   description = "Maximum number of tasks for auto-scaling"
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "target_cpu_utilization" {
@@ -214,20 +214,20 @@ variable "allowed_cidr_blocks" {
 
 # Database Configuration
 variable "database_user" {
-  description = "PostgreSQL database user"
+  description = "MySQL database user"
   type        = string
   default     = "photoportal"
 }
 
 variable "database_password" {
-  description = "PostgreSQL database password (REQUIRED - set in terraform.tfvars)"
+  description = "MySQL database password (REQUIRED - set in terraform.tfvars)"
   type        = string
-  default     = ""
+  default     = "Leeds@2026"
   sensitive   = true
 }
 
 variable "database_name" {
-  description = "PostgreSQL database name"
+  description = "MySQL database name"
   type        = string
   default     = "photoportal"
 }
@@ -235,6 +235,6 @@ variable "database_name" {
 variable "secret_key" {
   description = "Secret key for JWT tokens (REQUIRED - set in terraform.tfvars)"
   type        = string
-  default     = ""
+  default     = "Leeds@2026"
   sensitive   = true
 }

@@ -1,0 +1,7 @@
+# Custom MySQL image with demo data initialization
+FROM mysql:8.0
+
+# Copy initialization SQL script
+COPY init-db.sql /docker-entrypoint-initdb.d/01-init-demo-data.sql
+
+# MySQL will automatically execute files in /docker-entrypoint-initdb.d/ on first startup

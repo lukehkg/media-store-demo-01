@@ -21,17 +21,17 @@ def init_database(max_retries=10, retry_delay=5):
     
     for attempt in range(max_retries):
         try:
-            # First, check if PostgreSQL port is accessible
+            # First, check if MySQL port is accessible
             logger.info(f"Attempting to connect to database (attempt {attempt + 1}/{max_retries})...")
             
-            # Check if port 5432 is open
+            # Check if port 3306 is open
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(2)
-                result = sock.connect_ex(('localhost', 5432))
+                result = sock.connect_ex(('localhost', 3306))
                 sock.close()
                 if result != 0:
-                    logger.warning(f"Port 5432 on localhost is not accessible (result: {result})")
+                    logger.warning(f"Port 3306 on localhost is not accessible (result: {result})")
                     if attempt < max_retries - 1:
                         wait_time = retry_delay * (2 ** attempt)
                         logger.info(f"Waiting {wait_time} seconds before retry...")
@@ -51,7 +51,7 @@ def init_database(max_retries=10, retry_delay=5):
                 time.sleep(wait_time)
             else:
                 logger.error(f"❌ Failed to connect to database after {max_retries} attempts: {e}")
-                logger.error(f"Please check: 1) PostgreSQL container is running, 2) Port 5432 is accessible, 3) Database credentials are correct")
+                logger.error(f"Please check: 1) MySQL container is running, 2) Port 3306 is accessible, 3) Database credentials are correct")
                 raise
         except Exception as e:
             logger.error(f"❌ Unexpected error initializing database: {e}")
@@ -116,6 +116,12 @@ async def startup_event():
     logger.info("Starting application...")
     try:
         init_database()
+        # Initialize demo data if tables are empty
+        try:
+            from scripts.init_demo_data import init_demo_data
+            init_demo_data()
+        except Exception as e:
+            logger.warning(f"Demo data initialization skipped: {e}")
     except Exception as e:
         logger.error(f"Failed to initialize database on startup: {e}")
         # Don't crash the app, let it continue and retry on first request
